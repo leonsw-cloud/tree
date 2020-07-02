@@ -1,0 +1,31 @@
+{
+    "name": "leonsw/menu",
+    "description": "Leonsw\\Menu",
+    "type": "library",
+    "keywords": [
+        "leonsw\\menu"
+    ],
+    "homepage": "https://leonsw.com",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {},
+    "require-dev": {
+        "leonsw/tests": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Leonsw\\Menu\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Leonsw\\Menu\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    }
+}
