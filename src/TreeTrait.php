@@ -15,6 +15,8 @@ trait TreeTrait
 
     public $sortField = 'sort';
 
+    protected $deleteChildren = false;
+
     public function scopeTree($query, ?int $deep = null)
     {
         if ($deep) {
@@ -64,8 +66,6 @@ trait TreeTrait
         }
     }
 
-
-
     public function updateValidate()
     {
         $data = ['parent_id' => $this->parent_id];
@@ -83,8 +83,6 @@ trait TreeTrait
             ]);
         }
     }
-
-    protected $deleteChildren = false;
 
     public function deleteChildren()
     {
