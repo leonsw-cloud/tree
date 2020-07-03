@@ -3,10 +3,12 @@
 namespace Leonsw\Trees;
 
 use App\Model\Menu;
+use Hyperf\Di\Annotation\Inject;
 use Hyperf\Event\ListenerProvider;
 use Hyperf\Utils\ApplicationContext;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Hyperf\Validation\Contract\ValidatorFactoryInterface;
+use Hyperf\Validation\Rule;
+use Hyperf\Validation\ValidatorFactory;
 
 trait TreeTrait
 {
@@ -41,15 +43,13 @@ trait TreeTrait
     public static function bootTreeTrait()
     {
         static::saving(function (self $model) {
-            sleep(1);
-            dump(1);
-            //$model->updateValidate();
-            //$model->updateDeep();
+            $model->updateValidate();
+            $model->updateDeep();
         });
 
-        //static::deleting(function (self $model) {
-        //    $model->deleteChildren();
-        //});
+        static::deleting(function (self $model) {
+            $model->deleteChildren();
+        });
     }
 
 
@@ -73,19 +73,22 @@ trait TreeTrait
 
     public function updateValidate()
     {
+
+        $validatorFactory = ApplicationContext::getContainer()->get(ValidatorFactoryInterface::class);
+
         $data = ['parent_id' => $this->parent_id];
         $rules = [];
         if ($this->exists) {
             $rules[] = Rule::notIn([$this->id] + static::tree()->range()->children($this->id));
         }
         if ($this->parent_id) {
-            $rules[] = Rule::exists($this->table)->where('id', $this->parent_id);
+            $rules[] = Rule::exists($this->table, 'id')->where('id', $this->parent_id);
         }
 
         if ($rules) {
-            $validator = Validator::make($data, [
+            $validator = $validatorFactory->make($data, [
                 'parent_id' => $rules
-            ]);
+            ])->validate();
         }
     }
 
