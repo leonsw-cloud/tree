@@ -2,6 +2,7 @@
 
 namespace Leonsw\Trees;
 
+use Hyperf\Utils\Collection;
 use Leonsw\Utils\Arr;
 
 /**
@@ -70,6 +71,14 @@ class Tree
      */
     public function levels($fun = null, $id = 0)
     {
+        if (null === $fun) {
+            $fun = function ($model, $children) {
+                if ($children) {
+                    $model['children'] = $children;
+                }
+                return $model;
+            };
+        }
         $data = $this->group($id);
         return $this->levelsInternal($fun, $data);
     }
@@ -229,10 +238,13 @@ class Tree
 
     protected function format($models)
     {
+        $models = collect($models)->values();
         if ($this->selection) {
-            $models = Arr::pluck($models, $this->value, $this->key);
+            $models = $models->map(function ($model) {
+                return ['id' => $model->{$this->key}, 'value' => $model->{$this->value}];
+            });
         } elseif ($this->range) {
-            $models = Arr::pluck($models, $this->key, $this->key);
+            $models->pluck($this->key);
         }
         return $models;
     }

@@ -16,17 +16,10 @@ use Hyperf\Validation\ValidatorFactory;
  */
 trait TreeTrait
 {
-    public $field = 'parent_id';
-
-    public $key = 'id';
-
-    public $value = 'name';
-
-    public $sortField = 'sort';
 
     protected $deleteChildren = false;
 
-    protected $treeConfig = ['deep' => null, 'field' => 'parent_id', 'key' => 'id', 'sortField' => 'sort'];
+    protected $treeConfig = ['deep' => null, 'field' => 'parent_id', 'key' => 'id', 'value' => 'name', 'sortField' => 'sort'];
 
     public function scopeTree($query, array $config = [])
     {
@@ -34,14 +27,14 @@ trait TreeTrait
         if ($this->treeConfig['deep']) {
             $query->where('deep', '<=', $this->treeConfig['deep']);
         }
-        $query = $query->orderBy($this->treeConfig['filed'], 'ASC')
+        $query = $query->orderBy($this->treeConfig['field'], 'ASC')
             ->orderBy($this->treeConfig['sortField'], 'ASC')
-            ->orderBy($this->treeConfig['id'], 'ASC');
+            ->orderBy($this->treeConfig['key'], 'ASC');
 
         $tree = new Tree($query->get(), [
-            'field' => $this->{$this->treeConfig['field']},
-            'key' => $this->{$this->treeConfig['key']},
-            'value' => $this->{$this->treeConfig['value']}
+            'field' => $this->treeConfig['field'],
+            'key' => $this->treeConfig['key'],
+            'value' => $this->treeConfig['value']
         ]);
         return $tree;
     }
