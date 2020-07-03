@@ -10,6 +10,10 @@ use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\Rule;
 use Hyperf\Validation\ValidatorFactory;
 
+
+/**
+ * @method Tree tree()
+ */
 trait TreeTrait
 {
     public $field = 'parent_id';
@@ -22,20 +26,22 @@ trait TreeTrait
 
     protected $deleteChildren = false;
 
-    public function scopeTree($query, ?int $deep = null)
-    {
-        if ($deep) {
-            $query->where('deep', '<=', $deep);
-        }
-        $query = $query->orderBy($this->field, 'ASC')
-            ->orderBy($this->sortField, 'ASC')
-            ->orderBy($this->key, 'ASC');
+    protected $treeConfig = ['deep' => null, 'field' => 'parent_id', 'key' => 'id', 'sortField' => 'sort'];
 
-        $tree = new Tree([
-            'models' => $query->get(),
-            'field' => $this->field,
-            'key' => $this->key,
-            'value' => $this->value
+    public function scopeTree($query, array $config = [])
+    {
+        $this->treeConfig = array_merge($this->treeConfig, $config);
+        if ($this->treeConfig['deep']) {
+            $query->where('deep', '<=', $this->treeConfig['deep']);
+        }
+        $query = $query->orderBy($this->treeConfig['filed'], 'ASC')
+            ->orderBy($this->treeConfig['sortField'], 'ASC')
+            ->orderBy($this->treeConfig['id'], 'ASC');
+
+        $tree = new Tree($query->get(), [
+            'field' => $this->{$this->treeConfig['field']},
+            'key' => $this->{$this->treeConfig['key']},
+            'value' => $this->{$this->treeConfig['value']}
         ]);
         return $tree;
     }
@@ -58,7 +64,7 @@ trait TreeTrait
      */
     public function updateDeep()
     {
-        $deep = static::select('deep')->where(['id' => $this->parent_id])->value('deep');
+        $deep = static::select('deep')->where(['id' => $this->{$this->treeConfig['field']}])->value('deep');
 
         $this->setAttribute('deep', $deep ? $deep + 1 : 1);
         $deep = $this->deep - $this->getOriginal('deep');
@@ -76,13 +82,13 @@ trait TreeTrait
 
         $validatorFactory = ApplicationContext::getContainer()->get(ValidatorFactoryInterface::class);
 
-        $data = ['parent_id' => $this->parent_id];
+        $data = ['parent_id' => $this->{$this->treeConfig['field']}];
         $rules = [];
         if ($this->exists) {
             $rules[] = Rule::notIn([$this->id] + static::tree()->range()->children($this->id));
         }
-        if ($this->parent_id) {
-            $rules[] = Rule::exists($this->table, 'id')->where('id', $this->parent_id);
+        if ($this->{$this->treeConfig['field']}) {
+            $rules[] = Rule::exists($this->table, 'id')->where('id', $this->{$this->treeConfig['field']});
         }
 
         if ($rules) {
@@ -100,7 +106,7 @@ trait TreeTrait
                 static::destroy($children);
             }
         } else {
-            $exist = static::where(['parent_id' => $this->id])->exists();
+            $exist = static::where([$this->treeConfig['field'] => $this->id])->exists();
             if ($exist) {
                 // need delete children
                 throw new \RuntimeException('Please delete children or move children.');

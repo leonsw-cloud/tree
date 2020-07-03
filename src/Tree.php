@@ -18,9 +18,7 @@ class Tree
 
     public $value;
 
-    public $models;
-
-    public $modelClass;
+    protected $models;
 
     protected $selection = false;
 
@@ -28,8 +26,9 @@ class Tree
 
     protected $spcer = true;
 
-    public function __construct(array $config = [])
+    public function __construct($models, array $config = [])
     {
+        $this->models = $models;
         foreach ($config as $key => $value) {
             $this->{$key} = $value;
         }
