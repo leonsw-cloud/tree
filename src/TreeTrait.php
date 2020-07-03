@@ -1,7 +1,10 @@
 <?php
+
 namespace Leonsw\Trees;
 
 use App\Model\Menu;
+use Hyperf\Event\ListenerProvider;
+use Hyperf\Utils\ApplicationContext;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -22,11 +25,11 @@ trait TreeTrait
         if ($deep) {
             $query->where('deep', '<=', $deep);
         }
-        $query = $query->orderBy($this->field,  'ASC')
+        $query = $query->orderBy($this->field, 'ASC')
             ->orderBy($this->sortField, 'ASC')
-            ->orderBy($this->key,  'ASC');
+            ->orderBy($this->key, 'ASC');
 
-        $tree =  new Tree([
+        $tree = new Tree([
             'models' => $query->get(),
             'field' => $this->field,
             'key' => $this->key,
@@ -38,13 +41,15 @@ trait TreeTrait
     public static function bootTreeTrait()
     {
         static::saving(function (self $model) {
-            $model->updateValidate();
-            $model->updateDeep();
+            sleep(1);
+            dump(1);
+            //$model->updateValidate();
+            //$model->updateDeep();
         });
 
-        static::deleting(function (self $model) {
-            $model->deleteChildren();
-        });
+        //static::deleting(function (self $model) {
+        //    $model->deleteChildren();
+        //});
     }
 
 
