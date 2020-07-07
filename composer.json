@@ -1,9 +1,11 @@
 {
-    "name": "leonsw/menu",
-    "description": "Leonsw\\Menu",
+    "name": "leonsw/trees",
+    "description": "Leonsw Trees",
     "type": "library",
     "keywords": [
-        "leonsw\\menu"
+        "leonsw",
+        "trees",
+        "tree"
     ],
     "homepage": "https://leonsw.com",
     "license": "MIT",
@@ -15,12 +17,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Leonsw\\Menu\\": "src"
+            "Leonsw\\Trees\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Leonsw\\Menu\\Tests\\": "tests"
+            "LeonswTests\\Trees\\": "tests"
         }
     },
     "extra": {
