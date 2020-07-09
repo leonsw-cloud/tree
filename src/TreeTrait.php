@@ -78,7 +78,7 @@ trait TreeTrait
         $data = ['parent_id' => $this->{$this->treeConfig['field']}];
         $rules = [];
         if ($this->exists) {
-            $rules[] = Rule::notIn([$this->id] + static::tree()->range()->children($this->id));
+            $rules[] = Rule::notIn(static::tree()->range()->children($this->id)->push($this->id));
         }
         if ($this->{$this->treeConfig['field']}) {
             $rules[] = Rule::exists($this->table, 'id')->where('id', $this->{$this->treeConfig['field']});
