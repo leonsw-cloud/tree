@@ -71,10 +71,11 @@ class Tree
      */
     public function levels($fun = null, $id = 0)
     {
+        $this->spcer = false;
         if (null === $fun) {
             $fun = function ($model, $children) {
                 if ($children) {
-                    $model['children'] = $children;
+                    $model['children'] = collect($children);
                 }
                 return $model;
             };
