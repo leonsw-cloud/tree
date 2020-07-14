@@ -1,10 +1,9 @@
 {
     "name": "leonsw/tree",
-    "description": "Leonsw Trees",
+    "description": "Leonsw Tree",
     "type": "library",
     "keywords": [
         "leonsw",
-        "trees",
         "tree"
     ],
     "homepage": "https://leonsw.com",

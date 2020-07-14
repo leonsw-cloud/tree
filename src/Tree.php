@@ -1,6 +1,6 @@
 <?php
 
-namespace Leonsw\Trees;
+namespace Leonsw\Tree;
 
 use Hyperf\Utils\Collection;
 use Leonsw\Utils\Arr;

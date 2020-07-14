@@ -1,6 +1,6 @@
 <?php
 
-namespace Leonsw\Trees;
+namespace Leonsw\Tree;
 
 use App\Model\Menu;
 use Hyperf\Di\Annotation\Inject;
