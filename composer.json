@@ -1,5 +1,5 @@
 {
-    "name": "leonsw/trees",
+    "name": "leonsw/tree",
     "description": "Leonsw Trees",
     "type": "library",
     "keywords": [
@@ -17,12 +17,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Leonsw\\Trees\\": "src"
+            "Leonsw\\Tree\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "LeonswTests\\Trees\\": "tests"
+            "LeonswTests\\Tree\\": "tests"
         }
     },
     "extra": {
