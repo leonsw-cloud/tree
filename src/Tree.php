@@ -1,23 +1,28 @@
 <?php
 
+declare(strict_types=1);
+/**
+ * This file is part of Leonsw.
+ *
+ * @link     https://leonsw.com
+ * @document https://docs.leonsw.com
+ * @contact  leonsw.com@gmail.com
+ * @license  https://leonsw.com/LICENSE
+ */
 namespace Leonsw\Tree;
 
-use Hyperf\Utils\Collection;
-use Leonsw\Utils\Arr;
-
 /**
- * Tree
- *
- * @author Kids Return <390391483@qq.com>
+ * Tree.
  */
 class Tree
 {
-
     public $field;
 
     public $key;
 
     public $value;
+
+    public $i = 0;
 
     protected $models;
 
@@ -36,7 +41,7 @@ class Tree
     }
 
     /**
-     * 分组待处理
+     * 分组待处理.
      * @param number $id
      * @param string $children
      * @return unknown
@@ -45,14 +50,16 @@ class Tree
     {
         $models = [];
         foreach ($this->models as $key => $model) {
-            if ($id == $model[$this->key]) continue;
+            if ($id == $model[$this->key]) {
+                continue;
+            }
             $models[$model[$this->field]][$model[$this->key]] = $model;
         }
         return $this->spcerInternal($models);
     }
 
     /**
-     * 获取全部的树
+     * 获取全部的树.
      */
     public function all()
     {
@@ -66,13 +73,14 @@ class Tree
      *         $model['children'] = $children;
      *     }
      *     return $model;
-     * });
+     * });.
      * @param number $id
+     * @param null|mixed $fun
      */
     public function levels($fun = null, $id = 0)
     {
         $this->spcer = false;
-        if (null === $fun) {
+        if ($fun === null) {
             $fun = function ($model, $children) {
                 if ($children) {
                     $model['children'] = collect($children);
@@ -82,6 +90,122 @@ class Tree
         }
         $data = $this->group($id);
         return $this->levelsInternal($fun, $data);
+    }
+
+    /**
+     * 子节点.
+     * @param number $id
+     */
+    public function children($id = 0)
+    {
+        $models = $this->generate($id, true);
+        return $this->format($models);
+    }
+
+    /**
+     * 排除当前ID及子节点.
+     *
+     * @param number $id
+     * @return array $models
+     */
+    public function except($id = 0)
+    {
+        $models = $this->generate($id, false);
+        return $this->format($models);
+    }
+
+    /**
+     * 最后一级.
+     */
+    public function end()
+    {
+        $list = [];
+        $this->spcer = false;
+        $models = $this->group(0);
+        foreach ($models as $key => $value) {
+            foreach ($value as $model) {
+                if (! isset($models[$model[$this->key]])) {
+                    $list[] = $model;
+                }
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 获取当前节点的路径数组 一般可以用于 breadcrumbs.
+     * @param $id
+     */
+    public function paths($id)
+    {
+        $this->spcer = false;
+        $models = $this->group(0);
+        $paths = $this->pathInternal($id, $models);
+        sort($paths);
+        return $this->format($paths);
+    }
+
+    /**
+     * key => value 选择列表  selection()->all().
+     *
+     * @param number $id
+     * @param array $params
+     * @param null|mixed $key
+     * @param null|mixed $value
+     */
+    public function selection($key = null, $value = null)
+    {
+        $this->selection = true;
+        $this->range = false;
+        if ($key) {
+            $this->key = $key;
+        }
+        if ($value) {
+            $this->value = $value;
+        }
+        return $this;
+    }
+
+    /**
+     * key => key 列表 model range rule  range()->all() | ->children() | ->except().
+     * @param unknown $key
+     * @return \leonsw\tree\Tree
+     */
+    public function range($key = null)
+    {
+        $this->spcer = false;
+        $this->range = true;
+        $this->selection = false;
+        if ($key) {
+            $this->key = $key;
+        }
+        return $this;
+    }
+
+    /**
+     * set spcer  tree()->spcer().
+     * @param string $spcer
+     * @return \leonsw\tree\Tree
+     */
+    public function spcer($spcer = true)
+    {
+        $this->spcer = $spcer;
+        return $this;
+    }
+
+    /**
+     * 生成标准树.
+     * @param number $id
+     * @param string $children
+     * @return unknown
+     */
+    public function generate($id = 0, $children = false)
+    {
+        $data = $this->group($id, $children);
+        if (! $id || ! $children) {
+            $id = 0;
+        }
+        return $this->generateInternal($data, $id);
     }
 
     protected function levelsInternal($fun, $data, $parentId = 0)
@@ -99,68 +223,12 @@ class Tree
         return $models;
     }
 
-    /**
-     * 子节点
-     * @param number $id
-     */
-    public function children($id = 0)
-    {
-        $models = $this->generate($id, true);
-        return $this->format($models);
-    }
-
-    /**
-     * 排除当前ID及子节点
-     *
-     * @param number $id
-     * @return Array $models
-     */
-    public function except($id = 0)
-    {
-        $models = $this->generate($id, false);
-        return $this->format($models);
-    }
-
-
-    /**
-     * 最后一级
-     */
-    public function end()
-    {
-        $list = [];
-        $this->spcer = false;
-        $models = $this->group(0);
-        foreach ($models as $key => $value) {
-            foreach ($value as $model) {
-                if (!isset($models[$model[$this->key]])) {
-                    $list[] = $model;
-                }
-            }
-        }
-        return $list;
-    }
-
-
-    /**
-     * 获取当前节点的路径数组 一般可以用于 breadcrumbs
-     * @param $id
-     */
-    public function paths($id)
-    {
-        $this->spcer = false;
-        $models = $this->group(0);
-        $paths = $this->pathInternal($id, $models);
-        sort($paths);
-        return $this->format($paths);
-    }
-
-    public $i = 0;
     protected function pathInternal($id, $models)
     {
         $list = [];
         foreach ($models as $key => $value) {
             foreach ($value as $model) {
-                if($id == $model[$this->key]) {
+                if ($id == $model[$this->key]) {
                     $list[] = $model;
                     $list = array_merge($list, $this->pathInternal($model[$this->field], $models));
                     break 2;
@@ -170,61 +238,17 @@ class Tree
         return $list;
     }
 
-    /**
-     * key => value 选择列表  selection()->all()
-     *
-     * @param number $id
-     * @param Array $params
-     */
-    public function selection($key = null, $value = null)
-    {
-        $this->selection = true;
-        $this->range = false;
-        if ($key) {
-            $this->key = $key;
-        }
-        if ($value) {
-            $this->value = $value;
-        }
-        return $this;
-    }
-
-    /**
-     * key => key 列表 model range rule  range()->all() | ->children() | ->except()
-     * @param unknown $key
-     * @return \leonsw\tree\Tree
-     */
-    public function range($key = null)
-    {
-        $this->spcer = false;
-        $this->range = true;
-        $this->selection = false;
-        if ($key) {
-            $this->key = $key;
-        }
-        return $this;
-    }
-
-    /**
-     * set spcer  tree()->spcer()
-     * @param string $spcer
-     * @return \leonsw\tree\Tree
-     */
-    public function spcer($spcer = true)
-    {
-        $this->spcer = $spcer;
-        return $this;
-    }
-
     protected function spcerInternal($models)
     {
-        if (!$this->spcer) return $models;
+        if (! $this->spcer) {
+            return $models;
+        }
         foreach ($models as $key => $model) {
             $lastModel = end($model);
-            if (1 != $lastModel['deep']) {
-                $nbsp =  str_repeat(' ', ($lastModel['deep'] - 2) * 4);
-                $model = array_map(function($item) use ($lastModel, $nbsp) {
-                    if($lastModel[$this->key] === $item[$this->key]) {
+            if ($lastModel['deep'] != 1) {
+                $nbsp = str_repeat(' ', ($lastModel['deep'] - 2) * 4);
+                $model = array_map(function ($item) use ($lastModel, $nbsp) {
+                    if ($lastModel[$this->key] === $item[$this->key]) {
                         $item[$this->value] = $nbsp . '└─' . $item[$this->value];
                     } else {
                         $item[$this->value] = $nbsp . '├─' . $item[$this->value];
@@ -250,19 +274,6 @@ class Tree
         return $models;
     }
 
-    /**
-     * 生成标准树
-     * @param number $id
-     * @param string $children
-     * @return unknown
-     */
-    public function generate($id = 0, $children = false)
-    {
-        $data = $this->group($id, $children);
-        if (!$id || !$children) $id = 0;
-        return $this->generateInternal($data, $id);
-    }
-
     protected function generateInternal($data, $parentId = 0, $deep = 1)
     {
         $models = [];
@@ -277,5 +288,4 @@ class Tree
         }
         return $models;
     }
-
 }

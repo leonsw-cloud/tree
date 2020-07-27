@@ -1,22 +1,25 @@
 <?php
 
+declare(strict_types=1);
+/**
+ * This file is part of Leonsw.
+ *
+ * @link     https://leonsw.com
+ * @document https://docs.leonsw.com
+ * @contact  leonsw.com@gmail.com
+ * @license  https://leonsw.com/LICENSE
+ */
 namespace Leonsw\Tree;
 
-use App\Model\Menu;
-use Hyperf\Di\Annotation\Inject;
-use Hyperf\Event\ListenerProvider;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\Rule;
-use Hyperf\Validation\ValidatorFactory;
-
 
 /**
  * @method Tree tree()
  */
 trait TreeTrait
 {
-
     protected $deleteChildren = false;
 
     protected $treeConfig = ['deep' => null, 'field' => 'parent_id', 'key' => 'id', 'value' => 'name', 'sortField' => 'sort'];
@@ -31,12 +34,11 @@ trait TreeTrait
             ->orderBy($this->treeConfig['sortField'], 'ASC')
             ->orderBy($this->treeConfig['key'], 'ASC');
 
-        $tree = new Tree($query->get(), [
+        return new Tree($query->get(), [
             'field' => $this->treeConfig['field'],
             'key' => $this->treeConfig['key'],
-            'value' => $this->treeConfig['value']
+            'value' => $this->treeConfig['value'],
         ]);
-        return $tree;
     }
 
     public static function bootTreeTrait()
@@ -50,7 +52,6 @@ trait TreeTrait
             $model->deleteChildren();
         });
     }
-
 
     /**
      * Use to loop detected.
@@ -72,7 +73,6 @@ trait TreeTrait
 
     public function updateValidate()
     {
-
         $validatorFactory = ApplicationContext::getContainer()->get(ValidatorFactoryInterface::class);
 
         $data = ['parent_id' => $this->{$this->treeConfig['field']}];
@@ -86,7 +86,7 @@ trait TreeTrait
 
         if ($rules) {
             $validator = $validatorFactory->make($data, [
-                'parent_id' => $rules
+                'parent_id' => $rules,
             ])->validate();
         }
     }
