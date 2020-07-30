@@ -43,12 +43,12 @@ trait TreeTrait
 
     public static function bootTreeTrait()
     {
-        static::saving(function (self $model) {
+        static::onSaving(function (self $model) {
             $model->updateValidate();
             $model->updateDeep();
         });
 
-        static::deleting(function (self $model) {
+        static::onDeleting(function (self $model) {
             $model->deleteChildren();
         });
     }
