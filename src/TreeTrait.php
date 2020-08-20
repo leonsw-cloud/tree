@@ -64,7 +64,7 @@ trait TreeTrait
         $deep = $this->deep - $this->getOriginal('deep');
 
         if ($this->exists && $deep) {
-            $children = static::tree()->range()->children($this->id);
+            $children = static::tree()->range()->children($this->id)->pluck('id');
             if ($children) {
                 $this->whereIn('id', $children)->increment('deep', $deep);
             }
@@ -78,7 +78,7 @@ trait TreeTrait
         $data = ['parent_id' => $this->{$this->treeConfig['field']}];
         $rules = [];
         if ($this->exists) {
-            $rules[] = Rule::notIn(static::tree()->range()->children($this->id)->push($this->id));
+            $rules[] = Rule::notIn(static::tree()->range()->children($this->id)->pluck('id')->push($this->id));
         }
         if ($this->{$this->treeConfig['field']}) {
             $rules[] = Rule::exists($this->table, 'id')->where('id', $this->{$this->treeConfig['field']});
