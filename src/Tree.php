@@ -22,21 +22,15 @@ class Tree
 
     public $value = 'name';
 
-    public $i = 0;
-
-    protected $models;
-
     protected $group;
 
     protected $map;
 
     protected $context;
 
-    protected $selection = false;
+    protected $contextParenetId;
 
-    protected $range = false;
-
-    protected $spcer = true;
+    protected $spcer = false;
 
     public function __construct(array $models, array $config = [])
     {
@@ -53,7 +47,14 @@ class Tree
         }
     }
 
-    protected function getParentId(int $id): int
+    protected function reset()
+    {
+        $this->context = $this->group;
+        $this->contextParenetId = null;
+        $this->spcer = false;
+    }
+
+    protected function parentId(int $id): int
     {
         return $this->map[$id];
     }
@@ -63,7 +64,8 @@ class Tree
      */
     public function all()
     {
-        $data = $this->generate($this->childrenParenetId ?: 0);
+        $data = $this->generate($this->contextParenetId ?: 0);
+        $this->reset();
         return $data;
     }
 
@@ -89,7 +91,9 @@ class Tree
                 return $model;
             };
         }
-        return $this->levelsInternal($fun, $this->childrenParenetId ?: 0);
+        $data = $this->levelsInternal($fun, $this->contextParenetId ?: 0);
+        $this->reset();
+        return $data;
     }
 
 
@@ -110,11 +114,10 @@ class Tree
 
     public function pluck($value, ?string $key = null)
     {
-        $data = $this->generate($this->childrenParenetId ?: 0);
-        return collect($data)->values()->pluck($value, $key);
+        $data = collect($this->generate($this->contextParenetId ?: 0))->values()->pluck($value, $key);
+        $this->reset();
+        return $data;
     }
-
-    protected $childrenParenetId;
     /**
      * 子节点.
      * @param number $id
@@ -122,10 +125,8 @@ class Tree
     public function children(int $id = 0): self
     {
         // 从 group 哪里开始处理 ID
-        $this->childrenParenetId = $id;
+        $this->contextParenetId = $id;
         return $this;
-        $models = $this->generate($this->group, $id);
-        return $this->format($models);
     }
 
 
@@ -140,8 +141,8 @@ class Tree
         // 找到当前id 的 parent_id unset($data['parent_id']['id']])
 
         unset($this->context[$id]);
-        unset($this->context[$this->getParentId($id)][$id]);
-        $this->childrenParenetId = null;
+        unset($this->context[$this->parentId($id)][$id]);
+        $this->contextParenetId = null;
 
         return $this;
     }
@@ -218,18 +219,10 @@ class Tree
      * @param string $spcer
      * @return \leonsw\tree\Tree
      */
-    public function spcer($spcer = true): self
+    public function spcer(): self
     {
-        $this->spcer = $spcer;
-        return $this;
-    }
-
-    protected function spcerInternal(array $models): array
-    {
-        if (! $this->spcer) {
-            return $models;
-        }
-        foreach ($models as $key => $model) {
+        // 对 context 使用
+        foreach ($this->context as $key => $model) {
             $lastModel = end($model);
             if ($lastModel['deep'] != 1) {
                 $nbsp = str_repeat(' ', ($lastModel['deep'] - 2) * 4);
@@ -241,9 +234,9 @@ class Tree
                     }
                     return $item;
                 }, $model);
-                $models[$key] = $model;
+                $this->context[$key] = $model;
             }
         }
-        return $models;
+        return $this;
     }
 }
