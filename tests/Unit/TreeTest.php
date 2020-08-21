@@ -61,6 +61,8 @@ class TreeTest extends HttpTestCase
         //dump($this->tree()->except(1)->all());
         //dump($this->tree()->except(1)->levels());
 
+        dump($this->tree()->spcer()->levels());
+
         //dump($this->tree()->children(1)->all());
         //dump($this->tree()->children(1)->pluck('id'));
         //dump($this->tree()->children(1)->pluck('name', 'id'));
@@ -74,7 +76,7 @@ class TreeTest extends HttpTestCase
         //dump($this->tree()->parents(5)->pluck('name', 'id'));
 
 
-        // 不能使用连缀 必须获取所有 无法选择相应节点 
+        // 不能使用连缀 必须获取所有 无法选择相应节点
         dump(count($this->tree()->ends()));
 
 

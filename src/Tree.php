@@ -59,10 +59,7 @@ class Tree
         return $this->map[$id];
     }
 
-    /**
-     * 获取全部的树.
-     */
-    public function all()
+    public function all(): array
     {
         $data = $this->generate($this->contextParenetId ?: 0);
         $this->reset();
@@ -79,7 +76,7 @@ class Tree
      * });.
      * @param number $id
      */
-    public function levels($fun = null): array
+    public function levels(Callable $fun = null): array
     {
         // 排除的ID，可能不会使用 考虑 except()->levels()
         // 考虑 children()->levels()
@@ -112,7 +109,7 @@ class Tree
         return $models;
     }
 
-    public function pluck($value, ?string $key = null)
+    public function pluck($value, ?string $key = null): array
     {
         $data = collect($this->generate($this->contextParenetId ?: 0))->values()->pluck($value, $key);
         $this->reset();
@@ -168,7 +165,7 @@ class Tree
      * 获取当前节点的路径数组 一般可以用于 breadcrumbs.
      * @param $id
      */
-    public function parents($id): self
+    public function parents(int $id): self
     {
         // 考虑 except()->paths()
         // 考虑 children()->paths()
@@ -213,12 +210,6 @@ class Tree
         return $models;
     }
 
-
-    /**
-     * set spcer  tree()->spcer().
-     * @param string $spcer
-     * @return \leonsw\tree\Tree
-     */
     public function spcer(): self
     {
         // 对 context 使用
