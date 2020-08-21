@@ -39,6 +39,9 @@ class Tree
         $this->key = $key;
         $this->value = $value;
 
+        // 手动排序 防止数据库那边排序有问题
+        array_multisort(array_column($models, $this->field), SORT_ASC, $models);
+
         foreach ($models as $key => $model) {
             $parentId = $model[$this->field];
             $key = $model[$this->key];
@@ -48,7 +51,7 @@ class Tree
         $this->context = $this->group;
     }
 
-    protected function reset()
+    protected function reset(): void
     {
         $this->context = $this->group;
         $this->contextParenetId = null;
@@ -96,7 +99,7 @@ class Tree
      * });.
      * @param number $id
      */
-    public function levels(Callable $fun = null): object 
+    public function levels(Callable $fun = null): object
     {
         // 排除的ID，可能不会使用 考虑 except()->levels()
         // 考虑 children()->levels()
