@@ -266,7 +266,7 @@ class Tree
         $models = collect($models)->values();
         if ($this->selection) {
             $models = $models->map(function ($model) {
-                return ['id' => $model->{$this->key}, 'value' => $model->{$this->value}];
+                return ['id' => $model[$this->key], 'value' => $model[$this->value]];
             });
         } elseif ($this->range) {
             $models->pluck($this->key);

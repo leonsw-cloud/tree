@@ -7,6 +7,8 @@ use LeonswTests\Tree\Model\Tree;
 
 class TreeSeeder extends Seeder
 {
+    protected $i = 0;
+
     /**
      * Run the database seeds.
      *
@@ -14,24 +16,25 @@ class TreeSeeder extends Seeder
      */
     public function run()
     {
-        $ids = $this->insert(3, 'Deep 1');
+        $ids = $this->insert(3);
         $ids2 = [];
         foreach ($ids as $id) {
-            $ids2 = array_merge($ids2, $this->insert(3, 'Deep 2', $id));
+            $ids2 = array_merge($ids2, $this->insert(3, $id));
         }
 
         foreach ($ids2 as $id) {
-            $ids3 = $this->insert(3, 'Deep 3', $id);
+            $ids3 = $this->insert(3, $id);
         }
     }
 
-    public function insert(int $count, string $name, int $parentId = 0)
+    public function insert(int $count, int $parentId = 0)
     {
         $ids = [];
         foreach (range(1, $count) as $value) {
+            $this->i ++;
             $model = Tree::create([
                 'parent_id' => $parentId,
-                'name' => $name . ' _ ' . mt_rand(100000, 999999),
+                'name' => 'Name ' . $this->i,
             ]);
             $ids[] = (int) $model->id;
         }

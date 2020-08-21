@@ -23,13 +23,112 @@ class TreeTest extends HttpTestCase
 {
 
 
+    protected $treeAllName = [
+        'Name 1',
+        'Name 4',
+        'Name 13',
+        'Name 14',
+        'Name 15',
+        'Name 5',
+        'Name 16',
+        'Name 17',
+        'Name 18',
+        'Name 6',
+        'Name 19',
+        'Name 20',
+        'Name 21',
+        'Name 2',
+        'Name 7',
+        'Name 22',
+        'Name 23',
+        'Name 24',
+        'Name 8',
+        'Name 25',
+        'Name 26',
+        'Name 27',
+        'Name 9',
+        'Name 28',
+        'Name 29',
+        'Name 30',
+        'Name 3',
+        'Name 10',
+        'Name 31',
+        'Name 32',
+        'Name 33',
+        'Name 11',
+        'Name 34',
+        'Name 35',
+        'Name 36',
+        'Name 12',
+        'Name 37',
+        'Name 38',
+        'Name 39',
+    ];
+
+    protected $treeSpcerAllName = [
+        'Name 1',
+        '├─Name 4',
+        '    ├─Name 13',
+        '    ├─Name 14',
+        '    └─Name 15',
+        '├─Name 5',
+        '    ├─Name 16',
+        '    ├─Name 17',
+        '    └─Name 18',
+        '└─Name 6',
+        '    ├─Name 19',
+        '    ├─Name 20',
+        '    └─Name 21',
+        'Name 2',
+        '├─Name 7',
+        '    ├─Name 22',
+        '    ├─Name 23',
+        '    └─Name 24',
+        '├─Name 8',
+        '    ├─Name 25',
+        '    ├─Name 26',
+        '    └─Name 27',
+        '└─Name 9',
+        '    ├─Name 28',
+        '    ├─Name 29',
+        '    └─Name 30',
+        'Name 3',
+        '├─Name 10',
+        '    ├─Name 31',
+        '    ├─Name 32',
+        '    └─Name 33',
+        '├─Name 11',
+        '    ├─Name 34',
+        '    ├─Name 35',
+        '    └─Name 36',
+        '└─Name 12',
+        '    ├─Name 37',
+        '    ├─Name 38',
+        '    └─Name 39',
+    ];
+
+
+    protected $treeAllId = [
+        1,
+        4, 13, 14, 15,
+        5, 16, 17, 18,
+        6, 19, 20, 21,
+        2,
+        7, 22, 23, 24,
+        8, 25, 26, 27,
+        9, 28, 29, 30,
+        3,
+        10, 31, 32, 33,
+        11, 34, 35, 36,
+        12, 37, 38, 39,
+    ];
+
     public function setUp()
     {
         require_once dirname(__DIR__) . '/Model/Tree.php';
         require_once dirname(__DIR__) . '/Model/TreeV1.php';
 
         //$this->command('migrate', ['--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
-        //sleep(1);
         //$this->command('db:seed', ['--path' => dirname(__DIR__) . '/database/seeders', '--realpath' => 1]);
     }
 
@@ -54,14 +153,131 @@ class TreeTest extends HttpTestCase
         //$this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
     }
 
+    public function time()
+    {
+        $treeV1 = $this->treeV1();
+        $startAt = microtime(true);
+        foreach (range(1, 5) as $index) {
+            //$treeV1->all();
+            //$treeV1->levels();
+            //$treeV1->selection('id', 'name')->all();
+            //$treeV1->end();
+            //$treeV1->except(100);
+            //$treeV1->except(14);
+            //$a = $treeV1->children(14);
+            //dump(count($a));
+        }
+        dump('tree v1', microtime(true) - $startAt);
+
+        $tree = $this->tree();
+        $startAt = microtime(true);
+        foreach (range(1, 5) as $index) {
+            //$tree->spcer()->all();
+            //$tree->levels();
+            //$tree->spcer()->pluck('name', 'id');
+            //$tree->ends();
+            //$tree->except(14)->all();
+            //$a = $tree->children(14)->all();
+            //dump(count($a));
+        }
+        dump('tree v2', microtime(true) - $startAt);
+    }
+
     public function testAll()
+    {
+        $tree = $this->tree();
+        $all = $tree->all();
+        $this->assertEquals([
+            'id' => 1,
+            'parent_id' => 0,
+            'name' => 'Name 1',
+            'deep' => 1,
+        ], $all->get(0));
+
+        $this->assertEquals($this->treeAllId, $all->pluck('id')->toArray());
+        $this->assertEquals($this->treeAllName, $all->pluck('name')->toArray());
+
+        $spcerAll = $tree->spcer()->all();
+        $this->assertEquals($this->treeSpcerAllName, $spcerAll->pluck('name')->toArray());
+
+        $childrenAll = $tree->children(1)->all();
+
+        $this->assertEquals([
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+        ], $childrenAll->pluck('id')->toArray());
+
+        $childrenAll = $tree->children(5)->all();
+        $this->assertEquals([
+            16, 17, 18,
+        ], $childrenAll->pluck('id')->toArray());
+
+        $childrenAll = $tree->except(1)->all();
+
+        $this->assertEquals([
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $childrenAll->pluck('id')->toArray());
+
+        $childrenAll = $tree->except(2)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $childrenAll->pluck('id')->toArray());
+
+        $childrenAll = $tree->except(3)->except(2)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+        ], $childrenAll->pluck('id')->toArray());
+
+        $childrenAll = $tree->except(3)->except(2)->except(5)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            6, 19, 20, 21,
+        ], $childrenAll->pluck('id')->toArray());
+        
+        $childrenAll = $tree->parents(20)->all();
+
+        $this->assertEquals([
+            1, 6, 20,
+        ], $childrenAll->pluck('id')->toArray());
+
+    }
+
+    public function tes1tAll()
     {
         //dump($this->tree()->except(1)->pluck('name', 'id'));
         //dump($this->tree()->except(1)->pluck('id'));
         //dump($this->tree()->except(1)->all());
         //dump($this->tree()->except(1)->levels());
 
-        dump($this->tree()->spcer()->levels());
+
+        //$this->assertEquals($treev1All, $treeAll);
+        //$this->assertEquals($treev1Levels, $treeLevels);
+        //$this->assertEquals($treev1Selection, $treeSelection);
+        //$this->assertEquals($tree->spcer()->all(), $tree->spcer()->all());
+        //$this->assertEquals($tree->spcer()->levels(), $tree->spcer()->levels());
+        //$this->assertEquals($tree->spcer()->pluck('name', 'id'), $tree->spcer()->pluck('name', 'id'));
 
         //dump($this->tree()->children(1)->all());
         //dump($this->tree()->children(1)->pluck('id'));
@@ -77,15 +293,12 @@ class TreeTest extends HttpTestCase
 
 
         // 不能使用连缀 必须获取所有 无法选择相应节点
-        dump(count($this->tree()->ends()));
-
-
-        dump(count($this->tree()->ends()));
+        //dump(count($this->tree()->ends()));
+        //
+        //
+        //dump(count($this->tree()->ends()));
 
         //dump(count($this->treeV1()->end()));
-
-
-
 
 
         //dump($this->treeV1()->paths(5));

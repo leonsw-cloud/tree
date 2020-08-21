@@ -15,7 +15,7 @@ class Tree extends Model
 {
     use Filter;
     use TreeTrait;
-    use SoftDeletes;
+    //use SoftDeletes;
 
     protected $table = 'tree';
     protected $dateFormat = 'Y-m-d H:i:s.u';

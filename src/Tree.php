@@ -57,7 +57,7 @@ class Tree
 
     protected function parentId(int $id): int
     {
-        return $this->map[$id];
+        return $this->map[$id] ?? -1;
     }
 
     /**
@@ -79,11 +79,11 @@ class Tree
         return $models;
     }
 
-    public function all(): array
+    public function all()
     {
-        $data = $this->generate($this->contextParenetId ?: 0);
+        $models  = $this->generate($this->contextParenetId ?: 0);
         $this->reset();
-        return $data;
+        return collect($models)->values();
     }
 
     /**
@@ -104,6 +104,7 @@ class Tree
             $fun = function ($model, $children) {
                 if ($children) {
                     $model['children'] = collect($children);
+                    //$model['children'] = collect($children);
                 }
                 return $model;
             };
@@ -121,7 +122,7 @@ class Tree
             foreach ($this->context[$parentId] as $key => $model) {
                 $return = null;
                 if (isset($this->context[$model[$this->key]])) {
-                    $return = $this->levelsInternal($fun, $model[$this->key]);
+                    $return = $this->levelsRecursive($fun, $model[$this->key]);
                 }
                 $models[] = $fun($model, $return);
             }
@@ -129,11 +130,16 @@ class Tree
         return $models;
     }
 
-    public function pluck($value, ?string $key = null): array
+    public function pluck($value, ?string $key = null)
     {
-        $data = collect($this->generate($this->contextParenetId ?: 0))->values()->pluck($value, $key);
+        // 直接使用 pluck 会比较慢一点
+        $models = collect($this->generate($this->contextParenetId ?: 0))->values();
+        //$model->pluck($value, $key);
+        $models = $models->map(function ($model) {
+            return ['id' => $model[$this->key], 'value' => $model[$this->value]];
+        });
         $this->reset();
-        return $data;
+        return $models;
     }
     /**
      * 子节点.
@@ -190,25 +196,31 @@ class Tree
         // 考虑 except()->paths()
         // 考虑 children()->paths()
         //$this->spcer = false;
-        $this->parentsRecursive($id);
-        // 可以考虑用 unset() 删除自己
-        sort($this->context);
+        $list = $this->parentsRecursive($id);
+
+        krsort($list);
+        $this->context = [];
+        foreach ($list as $item) {
+            $this->context[$item[$this->field]][$item[$this->key]] = $item;
+        }
+
         return $this;
     }
 
     protected function parentsRecursive(int $id): array
     {
-        $this->context = [];
+        // 应该有改进的余地
+        $list = [];
         foreach ($this->group as $parentId => $value) {
             foreach ($value as $modelId => $model) {
                 if ($id == $modelId) {
-                    $this->context[$parentId][$modelId] = $model;
-                    $this->context = array_merge($this->context, $this->parentsRecursive($model[$this->field]));
+                    $list[] = $model;
+                    $list = array_merge($list, $this->parentsRecursive($model[$this->field]));
                     break 2;
                 }
             }
         }
-        return $this->context;
+        return $list;
     }
 
     public function spcer(): self
