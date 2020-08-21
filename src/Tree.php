@@ -134,12 +134,11 @@ class Tree
     {
         // 直接使用 pluck 会比较慢一点
         $models = collect($this->generate($this->contextParenetId ?: 0))->values();
-        //$model->pluck($value, $key);
-        $models = $models->map(function ($model) {
-            return ['id' => $model[$this->key], 'value' => $model[$this->value]];
-        });
+        //$models = $models->map(function ($model) {
+        //    return ['id' => $model[$this->key], 'value' => $model[$this->value]];
+        //});
         $this->reset();
-        return $models;
+        return $models->pluck($value, $key);
     }
     /**
      * 子节点.

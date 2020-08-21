@@ -255,13 +255,166 @@ class TreeTest extends HttpTestCase
             4, 13, 14, 15,
             6, 19, 20, 21,
         ], $childrenAll->pluck('id')->toArray());
-        
+
         $childrenAll = $tree->parents(20)->all();
 
         $this->assertEquals([
             1, 6, 20,
         ], $childrenAll->pluck('id')->toArray());
+    }
 
+    public function testLevels()
+    {
+        $tree = $this->tree();
+        $levels = $tree->levels();
+
+        $this->assertIsArray($levels);
+
+        $this->assertEquals(3, count($levels));
+        $this->assertEquals(3, $levels[2]['id']);
+
+        $this->assertArrayHasKey('children', $levels[0]);
+        $this->assertEquals(3, count($levels[0]['children']));
+        $this->assertEquals(3, $levels[0]['children']->count());
+        $this->assertEquals([
+            4, 5, 6
+        ], $levels[0]['children']->pluck('id')->toArray());
+
+
+        $this->assertArrayHasKey('children', $levels[0]['children']->get(1));
+        $this->assertEquals(3, $levels[0]['children']->get(1)['children']->count()); // 5
+        $this->assertEquals([
+            16, 17, 18
+        ], $levels[0]['children']->get(1)['children']->pluck('id')->toArray());
+
+
+        $levels = $tree->except(5)->levels();
+
+        $this->assertEquals([
+            4, 6
+        ], $levels[0]['children']->pluck('id')->toArray());
+
+
+        $levels = $tree->children(5)->levels();
+
+        $this->assertEquals([
+            16, 17 ,18
+        ], collect($levels)->pluck('id')->toArray());
+
+        $this->assertArrayNotHasKey('children', $levels[0]);
+
+
+        $levels = $tree->parents(17)->levels();
+
+
+        $this->assertArrayHasKey('children', $levels[0]);
+        $this->assertEquals([
+            1
+        ], collect($levels)->pluck('id')->toArray());
+
+        $this->assertArrayHasKey('children', $levels[0]['children']->get(0));
+        $this->assertEquals([
+            5
+        ], $levels[0]['children']->pluck('id')->toArray());
+
+
+        $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0)['children']->get(0));
+        $this->assertEquals([
+            17
+        ], $levels[0]['children']->get(0)['children']->pluck('id')->toArray());
+
+
+        $levels = $tree->levels(function ($model, $children) {
+            if ($children) {
+                $model['child'] = collect($children);
+            }
+            return $model;
+        });
+
+        $this->assertIsArray($levels);
+        $this->assertEquals(3, count($levels));
+        $this->assertArrayHasKey('child', $levels[0]);
+
+        // spcer ...
+    }
+
+    public function testPluck()
+    {
+        $tree = $this->tree();
+        $pluck = $tree->pluck('id');
+        $this->assertEquals($this->treeAllId, $pluck->toArray());
+
+
+        $pluck = $tree->pluck('name');
+        $this->assertEquals($this->treeAllName, $pluck->toArray());
+
+
+        $pluck = $tree->pluck('name', 'id');
+        $this->assertEquals($this->treeAllName, $pluck->values()->toArray());
+        $this->assertEquals($this->treeAllId, array_keys($pluck->toArray()));
+
+
+        $pluck = $tree->children(2)->pluck('id');
+
+        $this->assertEquals([
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+        ], $pluck->toArray());
+
+        $pluck = $tree->children(8)->pluck('id');
+        $this->assertEquals([
+            25, 26, 27,
+        ], $pluck->toArray());
+
+        $pluck = $tree->except(3)->pluck('id');
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+        ], $pluck->toArray());
+
+        $pluck = $tree->except(2)->pluck('id');
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $pluck->toArray());
+
+        $pluck = $tree->except(2)->except(1)->pluck('id');
+
+        $this->assertEquals([
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $pluck->toArray());
+
+        $pluck = $tree->except(11)->except(2)->except(1)->except(31)->pluck('id');
+
+        $this->assertEquals([
+            3,
+            10, 32, 33,
+            12, 37, 38, 39,
+        ], $pluck->toArray());
+
+        $pluck = $tree->parents(16)->pluck('id');
+
+        $this->assertEquals([
+            1, 5, 16,
+        ], $pluck->toArray());
     }
 
     public function tes1tAll()
