@@ -16,13 +16,14 @@ namespace Leonsw\Tree;
  */
 class Tree
 {
+
+    protected $value;
+    
     protected $field;
 
     protected $key;
 
-    protected $value;
 
-    
 
     protected $group;
 
@@ -32,7 +33,7 @@ class Tree
 
     protected $contextParenetId;
 
-    public function __construct(array $models, string $field = 'parent_id', string $key = 'id', string $value = 'name')
+    public function __construct(array $models, string $value = 'name', string $field = 'parent_id', string $key = 'id')
     {
         $this->field = $field;
         $this->key = $key;
