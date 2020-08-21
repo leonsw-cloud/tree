@@ -22,6 +22,8 @@ class Tree
 
     protected $value;
 
+    
+
     protected $group;
 
     protected $map;
@@ -30,14 +32,12 @@ class Tree
 
     protected $contextParenetId;
 
-    protected $spcer = false;
-
     public function __construct(array $models, string $field = 'parent_id', string $key = 'id', string $value = 'name')
     {
         $this->field = $field;
         $this->key = $key;
         $this->value = $value;
-        
+
         foreach ($models as $key => $model) {
             $parentId = $model[$this->field];
             $key = $model[$this->key];
