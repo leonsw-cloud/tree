@@ -59,11 +59,11 @@ class Tree
     {
         return $this->map[$id];
     }
-    
+
     /**
      * 生成标准树.
      */
-    protected function generate(int $parentId = 0, int $deep = 1): array
+    protected function generate(int $parentId = 0): array
     {
         // $data 考虑使用别的形式 $this->tempData
         $models = [];
@@ -71,7 +71,7 @@ class Tree
             foreach ($this->context[$parentId] as $key => $model) {
                 $models[$key] = $model;
                 if (isset($this->context[$model[$this->key]])) {
-                    $return = $this->generate($model['id'], $deep + 1);
+                    $return = $this->generate($model['id']);
                     $models = $models + $return;
                 }
             }
