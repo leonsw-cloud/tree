@@ -14,14 +14,14 @@ class TreeSeeder extends Seeder
      */
     public function run()
     {
-        $ids = $this->insert(5, 'Deep 1');
+        $ids = $this->insert(3, 'Deep 1');
         $ids2 = [];
         foreach ($ids as $id) {
-            $ids2 = array_merge($ids2, $this->insert(5, 'Deep 2', $id));
+            $ids2 = array_merge($ids2, $this->insert(3, 'Deep 2', $id));
         }
 
         foreach ($ids2 as $id) {
-            $ids3 = $this->insert(5, 'Deep 3', $id);
+            $ids3 = $this->insert(3, 'Deep 3', $id);
         }
     }
 
