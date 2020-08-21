@@ -268,7 +268,7 @@ class TreeTest extends HttpTestCase
         $tree = $this->tree();
         $levels = $tree->levels();
 
-        $this->assertIsArray($levels);
+        $this->assertIsObject($levels);
 
         $this->assertEquals(3, count($levels));
         $this->assertEquals(3, $levels[2]['id']);
@@ -331,11 +331,18 @@ class TreeTest extends HttpTestCase
             return $model;
         });
 
-        $this->assertIsArray($levels);
+        $this->assertIsObject($levels);
         $this->assertEquals(3, count($levels));
         $this->assertArrayHasKey('child', $levels[0]);
 
         // spcer ...
+        $levels = $tree->spcer()->levels();
+        $this->assertEquals([
+            'id' => 17,
+            'parent_id' => 5,
+            'name' => '    ├─Name 17',
+            'deep' => 3,
+        ], $levels->get(0)['children']->get(1)['children']->get(1));
     }
 
     public function testPluck()
@@ -414,6 +421,16 @@ class TreeTest extends HttpTestCase
 
         $this->assertEquals([
             1, 5, 16,
+        ], $pluck->toArray());
+
+
+        // spcer ...
+        $pluck = $tree->parents(16)->spcer()->pluck('name');
+
+        $this->assertEquals([
+            'Name 1',
+            '└─Name 5',
+            '    └─Name 16',
         ], $pluck->toArray());
     }
 

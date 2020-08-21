@@ -96,7 +96,7 @@ class Tree
      * });.
      * @param number $id
      */
-    public function levels(Callable $fun = null): array
+    public function levels(Callable $fun = null): object 
     {
         // 排除的ID，可能不会使用 考虑 except()->levels()
         // 考虑 children()->levels()
@@ -109,9 +109,9 @@ class Tree
                 return $model;
             };
         }
-        $data = $this->levelsRecursive($fun, $this->contextParenetId ?: 0);
+        $models = $this->levelsRecursive($fun, $this->contextParenetId ?: 0);
         $this->reset();
-        return $data;
+        return collect($models);
     }
 
 
