@@ -18,7 +18,7 @@ class Tree
 {
 
     protected $value;
-    
+
     protected $field;
 
     protected $key;
@@ -59,6 +59,25 @@ class Tree
     {
         return $this->map[$id];
     }
+    
+    /**
+     * 生成标准树.
+     */
+    protected function generate(int $parentId = 0, int $deep = 1): array
+    {
+        // $data 考虑使用别的形式 $this->tempData
+        $models = [];
+        if (isset($this->context[$parentId])) {
+            foreach ($this->context[$parentId] as $key => $model) {
+                $models[$key] = $model;
+                if (isset($this->context[$model[$this->key]])) {
+                    $return = $this->generate($model['id'], $deep + 1);
+                    $models = $models + $return;
+                }
+            }
+        }
+        return $models;
+    }
 
     public function all(): array
     {
@@ -89,13 +108,13 @@ class Tree
                 return $model;
             };
         }
-        $data = $this->levelsInternal($fun, $this->contextParenetId ?: 0);
+        $data = $this->levelsRecursive($fun, $this->contextParenetId ?: 0);
         $this->reset();
         return $data;
     }
 
 
-    protected function levelsInternal($fun, int $parentId = 0): array
+    protected function levelsRecursive($fun, int $parentId = 0): array
     {
         $models = [];
         if (isset($this->context[$parentId])) {
@@ -171,44 +190,25 @@ class Tree
         // 考虑 except()->paths()
         // 考虑 children()->paths()
         //$this->spcer = false;
-        $this->parentsInternal($id);
+        $this->parentsRecursive($id);
         // 可以考虑用 unset() 删除自己
         sort($this->context);
         return $this;
     }
 
-    protected function parentsInternal(int $id): array
+    protected function parentsRecursive(int $id): array
     {
         $this->context = [];
         foreach ($this->group as $parentId => $value) {
             foreach ($value as $modelId => $model) {
                 if ($id == $modelId) {
                     $this->context[$parentId][$modelId] = $model;
-                    $this->context = array_merge($this->context, $this->parentsInternal($model[$this->field]));
+                    $this->context = array_merge($this->context, $this->parentsRecursive($model[$this->field]));
                     break 2;
                 }
             }
         }
         return $this->context;
-    }
-
-    /**
-     * 生成标准树.
-     */
-    public function generate(int $parentId = 0, int $deep = 1): array
-    {
-        // $data 考虑使用别的形式 $this->tempData
-        $models = [];
-        if (isset($this->context[$parentId])) {
-            foreach ($this->context[$parentId] as $key => $model) {
-                $models[$key] = $model;
-                if (isset($this->context[$model[$this->key]])) {
-                    $return = $this->generate($model['id'], $deep + 1);
-                    $models = $models + $return;
-                }
-            }
-        }
-        return $models;
     }
 
     public function spcer(): self
