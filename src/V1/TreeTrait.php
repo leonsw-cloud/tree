@@ -34,7 +34,7 @@ trait TreeTrait
             ->orderBy($this->treeConfig['sortField'], 'ASC')
             ->orderBy($this->treeConfig['key'], 'ASC');
 
-        return new V1Tree($query->get(), [
+        return new Tree($query->get(), [
             'field' => $this->treeConfig['field'],
             'key' => $this->treeConfig['key'],
             'value' => $this->treeConfig['value'],

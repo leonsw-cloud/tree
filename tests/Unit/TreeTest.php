@@ -45,7 +45,7 @@ class TreeTest extends HttpTestCase
     {
         $data = \LeonswTests\Tree\Model\TreeV1::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
 
-        $tree = new Tree($data);
+        $tree = new \Leonsw\Tree\V1\Tree($data, ['field' => 'parent_id', 'key' => 'id', 'value' => 'name']);
         return $tree;
     }
 
@@ -56,17 +56,49 @@ class TreeTest extends HttpTestCase
 
     public function testAll()
     {
-        dump($this->treeV1()->children(5));
-        //dump($this->tree()->except(1));
-        //dump($this->tree()->levels(null));
+        //dump($this->tree()->except(1)->pluck('name', 'id'));
+        //dump($this->tree()->except(1)->pluck('id'));
+        //dump($this->tree()->except(1)->all());
+        //dump($this->tree()->except(1)->levels());
+
+        //dump($this->tree()->children(1)->all());
+        //dump($this->tree()->children(1)->pluck('id'));
+        //dump($this->tree()->children(1)->pluck('name', 'id'));
+
+        //dump($this->tree()->except(5)->levels());
+        //dump($this->tree()->children(1)->levels());
+
+        //dump($this->tree()->parents(5)->all());
+        //dump($this->tree()->parents(5)->levels());
+        //dump($this->tree()->parents(5)->pluck('id'));
+        //dump($this->tree()->parents(5)->pluck('name', 'id'));
+
+
+        // 不能使用连缀 必须获取所有 无法选择相应节点 
+        dump(count($this->tree()->ends()));
+
+
+        dump(count($this->tree()->ends()));
+
+        //dump(count($this->treeV1()->end()));
+
+
+
+
+
+        //dump($this->treeV1()->paths(5));
+
+        //dump($this->treeV1()->children(5));
+        //dump($this->treeV1()->except(1));
+        //dump($this->treeV1()->levels(null));
 
         // 考虑使用 parents
-        //dump($this->tree()->paths(16));
+        //dump($this->treeV1()->paths(16));
 
         // 考虑使用 last
-        //dump($this->tree()->end());
+        //dump($this->treeV1()->end());
 
-        //dump($this->tree()->selection('id', 'name')->all());
+        //dump($this->treeV1()->selection('id', 'name')->all());
 
         // 递归优化
 

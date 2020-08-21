@@ -40,8 +40,6 @@ class Tree
 
     public function __construct(array $models, array $config = [])
     {
-        $this->models = $models;
-
         foreach ($models as $key => $model) {
             $parentId = $model[$this->field];
             $key = $model[$this->key];
@@ -49,6 +47,7 @@ class Tree
             $this->map[$key] = $parentId;
 
         }
+        $this->context = $this->group;
         foreach ($config as $key => $value) {
             $this->{$key} = $value;
         }
@@ -59,35 +58,13 @@ class Tree
         return $this->map[$id];
     }
 
-    public function group2($data)
-    {
-        $group = [];
-        $map = [];
-        return $group;
-    }
-
-    /**
-     * 分组待处理.
-     */
-    public function group(int $id = 0)
-    {
-        $models = [];
-        foreach ($this->models as $key => $model) {
-            if ($id == $model[$this->key]) {
-                continue;
-            }
-            $models[$model[$this->field]][$model[$this->key]] = $model;
-        }
-        return $this->spcerInternal($models);
-    }
-
     /**
      * 获取全部的树.
      */
     public function all()
     {
-        $data = $this->generate($this->group);
-        return $this->format($data);
+        $data = $this->generate($this->childrenParenetId ?: 0);
+        return $data;
     }
 
     /**
@@ -100,11 +77,10 @@ class Tree
      * });.
      * @param number $id
      */
-    public function levels($fun = null, int $id = 0): array
+    public function levels($fun = null): array
     {
         // 排除的ID，可能不会使用 考虑 except()->levels()
         // 考虑 children()->levels()
-        $this->spcer = false;
         if ($fun === null) {
             $fun = function ($model, $children) {
                 if ($children) {
@@ -113,54 +89,72 @@ class Tree
                 return $model;
             };
         }
-        //$data = $this->group($id);
-        $data = $this->group;
-        if ($id) {
-            // 排除的 ID
-            unset($data[$id]);
-            unset($data[$this->getParentId($id)][$id]);
-        }
-        return $this->levelsInternal($fun, $data);
+        return $this->levelsInternal($fun, $this->childrenParenetId ?: 0);
     }
 
+
+    protected function levelsInternal($fun, int $parentId = 0): array
+    {
+        $models = [];
+        if (isset($this->context[$parentId])) {
+            foreach ($this->context[$parentId] as $key => $model) {
+                $return = null;
+                if (isset($this->context[$model[$this->key]])) {
+                    $return = $this->levelsInternal($fun, $model[$this->key]);
+                }
+                $models[] = $fun($model, $return);
+            }
+        }
+        return $models;
+    }
+
+    public function pluck($value, ?string $key = null)
+    {
+        $data = $this->generate($this->childrenParenetId ?: 0);
+        return collect($data)->values()->pluck($value, $key);
+    }
+
+    protected $childrenParenetId;
     /**
      * 子节点.
      * @param number $id
      */
-    public function children(int $id = 0): array
+    public function children(int $id = 0): self
     {
-        // 从 group 哪里开始处理
+        // 从 group 哪里开始处理 ID
+        $this->childrenParenetId = $id;
+        return $this;
         $models = $this->generate($this->group, $id);
         return $this->format($models);
     }
+
 
     /**
      * 排除当前ID及子节点.
      *
      * @param number $id
      */
-    public function except(int $id = 0): array
+    public function except(int $id = 0): self
     {
-        $data = $this->group;
         // 考虑使用 $this->tempData
         // 找到当前id 的 parent_id unset($data['parent_id']['id']])
 
-        unset($data[$id]);
-        unset($data[$this->getParentId($id)][$id]);
-        $models = $this->generate($data);
-        return $this->format($models);
+        unset($this->context[$id]);
+        unset($this->context[$this->getParentId($id)][$id]);
+        $this->childrenParenetId = null;
+
+        return $this;
     }
 
     /**
      * 最后一级.
      */
-    public function end(): array
+    public function ends(): array
     {
         $list = [];
-        $this->spcer = false;
-        foreach ($this->group as $key => $value) {
-            foreach ($value as $model) {
-                if (! isset($models[$model[$this->key]])) {
+        foreach ($this->context as $parentId => $models) {
+            foreach ($models as $id => $model) {
+                if (! isset($this->context[$id])) {
                     $list[] = $model;
                 }
             }
@@ -173,56 +167,51 @@ class Tree
      * 获取当前节点的路径数组 一般可以用于 breadcrumbs.
      * @param $id
      */
-    public function paths($id): array
+    public function parents($id): self
     {
         // 考虑 except()->paths()
         // 考虑 children()->paths()
-        $this->spcer = false;
-        $paths = $this->pathInternal($id, $this->group);
-        // 只处理 group 结构？ 返回 context
-        sort($paths);
-        return $this->format($paths);
-    }
-
-    /**
-     * key => value 选择列表  selection()->all().
-     *
-     * @param number $id
-     * @param array $params
-     * @param null|mixed $key
-     * @param null|mixed $value
-     */
-    public function selection($key = null, $value = null): self
-    {
-        $this->selection = true;
-        $this->range = false;
-        if ($key) {
-            $this->key = $key;
-        }
-        if ($value) {
-            $this->value = $value;
-        }
+        //$this->spcer = false;
+        $this->parentsInternal($id);
+        // 可以考虑用 unset() 删除自己
+        sort($this->context);
         return $this;
     }
 
-    /**
-     * 考虑和 selection 合并为 pluck()
-     * children()->pluck('id')
-     * except()->pluck('id', 'name')
-     * key => key 列表 model range rule  range()->all() | ->children() | ->except().
-     * @param unknown $key
-     * @return \leonsw\tree\Tree
-     */
-    public function range($key = null): self
+    protected function parentsInternal(int $id): array
     {
-        $this->spcer = false;
-        $this->range = true;
-        $this->selection = false;
-        if ($key) {
-            $this->key = $key;
+        $this->context = [];
+        foreach ($this->group as $parentId => $value) {
+            foreach ($value as $modelId => $model) {
+                if ($id == $modelId) {
+                    $this->context[$parentId][$modelId] = $model;
+                    $this->context = array_merge($this->context, $this->parentsInternal($model[$this->field]));
+                    break 2;
+                }
+            }
         }
-        return $this;
+        return $this->context;
     }
+
+    /**
+     * 生成标准树.
+     */
+    public function generate(int $parentId = 0, int $deep = 1): array
+    {
+        // $data 考虑使用别的形式 $this->tempData
+        $models = [];
+        if (isset($this->context[$parentId])) {
+            foreach ($this->context[$parentId] as $key => $model) {
+                $models[$key] = $model;
+                if (isset($this->context[$model[$this->key]])) {
+                    $return = $this->generate($model['id'], $deep + 1);
+                    $models = $models + $return;
+                }
+            }
+        }
+        return $models;
+    }
+
 
     /**
      * set spcer  tree()->spcer().
@@ -233,55 +222,6 @@ class Tree
     {
         $this->spcer = $spcer;
         return $this;
-    }
-
-    /**
-     * 生成标准树.
-     */
-    public function generate(array $data, int $parentId = 0, int $deep = 1): array
-    {
-        // $data 考虑使用别的形式 $this->tempData
-        $models = [];
-        if (isset($data[$parentId])) {
-            foreach ($data[$parentId] as $key => $model) {
-                $models[$key] = $model;
-                if (isset($data[$model[$this->key]])) {
-                    $return = $this->generate($data, $model['id'], $deep + 1);
-                    $models = $models + $return;
-                }
-            }
-        }
-        return $models;
-    }
-
-    protected function levelsInternal($fun, array $data, int $parentId = 0): array
-    {
-        $models = [];
-        if (isset($data[$parentId])) {
-            foreach ($data[$parentId] as $key => $model) {
-                $return = null;
-                if (isset($data[$model[$this->key]])) {
-                    $return = $this->levelsInternal($fun, $data, $model[$this->key]);
-                }
-                $models[] = $fun($model, $return);
-            }
-        }
-        return $models;
-    }
-
-    protected function pathInternal(int $id, array $models): array
-    {
-        $list = [];
-        foreach ($models as $key => $value) {
-            foreach ($value as $model) {
-                if ($id == $model[$this->key]) {
-                    $list[] = $model;
-                    $list = array_merge($list, $this->pathInternal($model[$this->field], $models));
-                    break 2;
-                }
-            }
-        }
-        return $list;
     }
 
     protected function spcerInternal(array $models): array
@@ -305,16 +245,5 @@ class Tree
             }
         }
         return $models;
-    }
-
-    protected function format(array $models): array
-    {
-        $models = collect($models)->values();
-        if ($this->selection) {
-            $models = $models->pluck($this->value, $this->key);
-        } elseif ($this->range) {
-            $models = $models->pluck($this->key);
-        }
-        return $models->toArray();
     }
 }
