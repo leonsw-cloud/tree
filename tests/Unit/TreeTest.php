@@ -505,51 +505,5 @@ class TreeTest extends HttpTestCase
 
 
     }
-
-
-    //public function testChildren()
-    //{
-    //
-    //}
-    //
-    //public function testParents()
-    //{
-    //
-    //}
-    //
-    //public function testExcpt()
-    //{
-    //
-    //}
-    //
-    //public function testLevel()
-    //{
-    //
-    //}
-    //
-    //public function testSelection()
-    //{
-    //
-    //}
-    //
-    //public function testLast()
-    //{
-    //
-    //}
-    //
-    //public function testFirst()
-    //{
-    //
-    //}
-    //
-    //public function testRange()
-    //{
-    //
-    //}
-    //
-    //public function testSpcer()
-    //{
-    //
-    //}
 }
 
