@@ -16,11 +16,11 @@ namespace Leonsw\Tree;
  */
 class Tree
 {
-    public $field = 'parent_id';
+    protected $field;
 
-    public $key = 'id';
+    protected $key;
 
-    public $value = 'name';
+    protected $value;
 
     protected $group;
 
@@ -32,19 +32,19 @@ class Tree
 
     protected $spcer = false;
 
-    public function __construct(array $models, array $config = [])
+    public function __construct(array $models, string $field = 'parent_id', string $key = 'id', string $value = 'name')
     {
+        $this->field = $field;
+        $this->key = $key;
+        $this->value = $value;
+        
         foreach ($models as $key => $model) {
             $parentId = $model[$this->field];
             $key = $model[$this->key];
             $this->group[$parentId][$key] = $model;
             $this->map[$key] = $parentId;
-
         }
         $this->context = $this->group;
-        foreach ($config as $key => $value) {
-            $this->{$key} = $value;
-        }
     }
 
     protected function reset()
