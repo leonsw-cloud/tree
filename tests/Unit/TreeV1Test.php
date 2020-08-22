@@ -13,13 +13,13 @@ declare(strict_types=1);
 namespace LeonswTests\Tree\Unit;
 
 use Leonsw\Tests\HttpTestCase;
-use Leonsw\Tree\Tree;
+use LeonswTests\Tree\Model\TreeV1;
 
 /**
  * @internal
  * @coversNothing
  */
-class TreeTest extends HttpTestCase
+class TreeV1Test extends HttpTestCase
 {
 
 
@@ -125,68 +125,24 @@ class TreeTest extends HttpTestCase
 
     public function setUp()
     {
-        require_once dirname(__DIR__) . '/Model/Tree.php';
         require_once dirname(__DIR__) . '/Model/TreeV1.php';
-
-        //$this->command('migrate', ['--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
-        //$this->command('db:seed', ['--path' => dirname(__DIR__) . '/database/seeders', '--realpath' => 1]);
     }
 
     public function tree()
     {
-        $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
-
-        $tree = new Tree($data);
-        return $tree;
-    }
-
-    public function treeV1()
-    {
-        $data = \LeonswTests\Tree\Model\TreeV1::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
+        $data = TreeV1::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
 
         $tree = new \Leonsw\Tree\V1\Tree($data, ['field' => 'parent_id', 'key' => 'id', 'value' => 'name']);
         return $tree;
     }
 
-    public function tearDown()
-    {
-        //$this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
-    }
 
-    public function time()
-    {
-        $treeV1 = $this->treeV1();
-        $startAt = microtime(true);
-        foreach (range(1, 5) as $index) {
-            //$treeV1->all();
-            //$treeV1->levels();
-            //$treeV1->selection('id', 'name')->all();
-            //$treeV1->end();
-            //$treeV1->except(100);
-            //$treeV1->except(14);
-            //$a = $treeV1->children(14);
-            //dump(count($a));
-        }
-        dump('tree v1', microtime(true) - $startAt);
-
-        $tree = $this->tree();
-        $startAt = microtime(true);
-        foreach (range(1, 5) as $index) {
-            //$tree->spcer()->all();
-            //$tree->levels();
-            //$tree->spcer()->pluck('name', 'id');
-            //$tree->ends();
-            //$tree->except(14)->all();
-            //$a = $tree->children(14)->all();
-            //dump(count($a));
-        }
-        dump('tree v2', microtime(true) - $startAt);
-    }
 
     public function testAll()
     {
         $tree = $this->tree();
-        $all = $tree->all();
+        $all = $tree->spcer(false)->all();
+
         $this->assertEquals([
             'id' => 1,
             'parent_id' => 0,
@@ -194,13 +150,14 @@ class TreeTest extends HttpTestCase
             'deep' => 1,
         ], $all->get(0));
 
+
         $this->assertEquals($this->treeAllId, $all->pluck('id')->toArray());
         $this->assertEquals($this->treeAllName, $all->pluck('name')->toArray());
 
         $all = $tree->spcer()->all();
         $this->assertEquals($this->treeSpcerAllName, $all->pluck('name')->toArray());
 
-        $all = $tree->children(1)->all();
+        $all = $tree->children(1);
 
         $this->assertEquals([
             4, 13, 14, 15,
@@ -208,12 +165,12 @@ class TreeTest extends HttpTestCase
             6, 19, 20, 21,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->children(5)->all();
+        $all = $tree->children(5);
         $this->assertEquals([
             16, 17, 18,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->except(1)->all();
+        $all = $tree->except(1);
 
         $this->assertEquals([
             2,
@@ -226,7 +183,7 @@ class TreeTest extends HttpTestCase
             12, 37, 38, 39,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->except(2)->all();
+        $all = $tree->except(2);
 
         $this->assertEquals([
             1,
@@ -239,24 +196,36 @@ class TreeTest extends HttpTestCase
             12, 37, 38, 39,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->except(3)->except(2)->all();
+        $all = $tree->except(3);
 
         $this->assertEquals([
             1,
             4, 13, 14, 15,
             5, 16, 17, 18,
             6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->except(3)->except(2)->except(5)->all();
+        $all = $tree->except(5);
 
         $this->assertEquals([
             1,
             4, 13, 14, 15,
             6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
         ], $all->pluck('id')->toArray());
 
-        $all = $tree->parents(20)->all();
+        $all = $tree->paths(20);
 
         $this->assertEquals([
             1, 6, 20,
@@ -267,6 +236,7 @@ class TreeTest extends HttpTestCase
     {
         $tree = $this->tree();
         $levels = $tree->levels();
+        $levels = collect($levels);
 
         $this->assertIsObject($levels);
 
@@ -288,41 +258,12 @@ class TreeTest extends HttpTestCase
         ], $levels[0]['children']->get(1)['children']->pluck('id')->toArray());
 
 
-        $levels = $tree->except(5)->levels();
+        $levels = $tree->levels(null, 5);
+        $levels = collect($levels);
 
         $this->assertEquals([
             4, 6
         ], $levels[0]['children']->pluck('id')->toArray());
-
-
-        $levels = $tree->children(5)->levels();
-
-        $this->assertEquals([
-            16, 17 ,18
-        ], collect($levels)->pluck('id')->toArray());
-
-        $this->assertArrayNotHasKey('children', $levels[0]);
-
-
-        $levels = $tree->parents(17)->levels();
-
-
-        $this->assertArrayHasKey('children', $levels[0]);
-        $this->assertEquals([
-            1
-        ], collect($levels)->pluck('id')->toArray());
-
-        $this->assertArrayHasKey('children', $levels[0]['children']->get(0));
-        $this->assertEquals([
-            5
-        ], $levels[0]['children']->pluck('id')->toArray());
-
-
-        $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0)['children']->get(0));
-        $this->assertEquals([
-            17
-        ], $levels[0]['children']->get(0)['children']->pluck('id')->toArray());
-
 
         $levels = $tree->levels(function ($model, $children) {
             if ($children) {
@@ -331,34 +272,34 @@ class TreeTest extends HttpTestCase
             return $model;
         });
 
+        $levels = collect($levels);
+
         $this->assertIsObject($levels);
         $this->assertEquals(3, count($levels));
         $this->assertArrayHasKey('child', $levels[0]);
-
-        // spcer ...
-        $levels = $tree->spcer()->levels();
-        $this->assertEquals([
-            'id' => 17,
-            'parent_id' => 5,
-            'name' => '    ├─Name 17',
-            'deep' => 3,
-        ], $levels->get(0)['children']->get(1)['children']->get(1));
     }
 
     public function testPluck()
     {
         $tree = $this->tree();
-        $pluck = $tree->pluck('id');
-        $this->assertEquals($this->treeAllId, $pluck->toArray());
+        $pluck = $tree->spcer(false)->selection()->all();
+        $this->assertEquals($this->treeAllId, $pluck->pluck('id')->toArray());
 
 
-        $pluck = $tree->pluck('name');
-        $this->assertEquals($this->treeAllName, $pluck->toArray());
+        $pluck = $tree->spcer(false)->selection()->all();
+        $this->assertEquals($this->treeAllName, $pluck->pluck('value')->toArray());
 
 
-        $pluck = $tree->pluck('name', 'id');
-        $this->assertEquals($this->treeAllName, $pluck->values()->toArray());
-        $this->assertEquals($this->treeAllId, array_keys($pluck->toArray()));
+        $pluck = $tree->spcer(false)->selection()->all();
+        $this->assertEquals([
+            'id' => 1,
+            'value' => 'Name 1'
+        ], $pluck->values()->toArray()[0]);
+
+        $this->assertEquals([
+            'id' => 39,
+            'value' => 'Name 39'
+        ], $pluck->values()->toArray()[38]);
 
 
         $pluck = $tree->children(2)->pluck('id');
@@ -400,127 +341,20 @@ class TreeTest extends HttpTestCase
             12, 37, 38, 39,
         ], $pluck->toArray());
 
-        $pluck = $tree->except(2)->except(1)->pluck('id');
-
-        $this->assertEquals([
-            3,
-            10, 31, 32, 33,
-            11, 34, 35, 36,
-            12, 37, 38, 39,
-        ], $pluck->toArray());
-
-        $pluck = $tree->except(11)->except(2)->except(1)->except(31)->pluck('id');
-
-        $this->assertEquals([
-            3,
-            10, 32, 33,
-            12, 37, 38, 39,
-        ], $pluck->toArray());
-
-        $pluck = $tree->parents(16)->pluck('id');
+        $pluck = $tree->paths(16)->pluck('id');
 
         $this->assertEquals([
             1, 5, 16,
         ], $pluck->toArray());
 
-
         // spcer ...
-        $pluck = $tree->parents(16)->spcer()->pluck('name');
+        $pluck = $tree->paths(16)->pluck('value');
 
         $this->assertEquals([
             'Name 1',
-            '└─Name 5',
-            '    └─Name 16',
+            'Name 5',
+            'Name 16',
         ], $pluck->toArray());
-    }
-
-    public function tes1tAll()
-    {
-        //dump($this->tree()->except(1)->pluck('name', 'id'));
-        //dump($this->tree()->except(1)->pluck('id'));
-        //dump($this->tree()->except(1)->all());
-        //dump($this->tree()->except(1)->levels());
-
-
-        //$this->assertEquals($treev1All, $treeAll);
-        //$this->assertEquals($treev1Levels, $treeLevels);
-        //$this->assertEquals($treev1Selection, $treeSelection);
-        //$this->assertEquals($tree->spcer()->all(), $tree->spcer()->all());
-        //$this->assertEquals($tree->spcer()->levels(), $tree->spcer()->levels());
-        //$this->assertEquals($tree->spcer()->pluck('name', 'id'), $tree->spcer()->pluck('name', 'id'));
-
-        //dump($this->tree()->children(1)->all());
-        //dump($this->tree()->children(1)->pluck('id'));
-        //dump($this->tree()->children(1)->pluck('name', 'id'));
-
-        //dump($this->tree()->except(5)->levels());
-        //dump($this->tree()->children(1)->levels());
-
-        //dump($this->tree()->parents(5)->all());
-        //dump($this->tree()->parents(5)->levels());
-        //dump($this->tree()->parents(5)->pluck('id'));
-        //dump($this->tree()->parents(5)->pluck('name', 'id'));
-
-
-        // 不能使用连缀 必须获取所有 无法选择相应节点
-        //dump(count($this->tree()->ends()));
-        //
-        //
-        //dump(count($this->tree()->ends()));
-
-        //dump(count($this->treeV1()->end()));
-
-
-        //dump($this->treeV1()->paths(5));
-
-        //dump($this->treeV1()->children(5));
-        //dump($this->treeV1()->except(1));
-        //dump($this->treeV1()->levels(null));
-
-        // 考虑使用 parents
-        //dump($this->treeV1()->paths(16));
-
-        // 考虑使用 last
-        //dump($this->treeV1()->end());
-
-        //dump($this->treeV1()->selection('id', 'name')->all());
-
-        // 递归优化
-
-
-        // 考虑和 selection 合并为 pluck()
-        // 返回集合可以不用处理
-        // 最后使用上下文生成
-        // $this->generate($this->context, $id)
-        //  children()->pluck('id')
-        //  except()->pluck('id', 'name')
-
-        // dump($this->tree()->range()->children(5));
-
-        // spcer 的问题
-        // generate 前处理 spcer
-
-        //dd($this->tree()->all());
-
-        // 过度 1
-        // except
-        // children()
-        // paths()
-        // end()
-
-        // 过度 2
-        // spcer()
-
-
-        // 最后一级
-        // 使用集合考虑 直接返回对象
-        // 外部 pluck(), 也可用于 resource
-
-        // pluck()
-        // all()
-        // levels()
-
-
     }
 }
 
