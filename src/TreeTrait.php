@@ -11,6 +11,7 @@ declare(strict_types=1);
  */
 namespace Leonsw\Tree;
 
+use Hyperf\Database\Model\Builder;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\Rule;
@@ -22,23 +23,19 @@ trait TreeTrait
 {
     protected $deleteChildren = false;
 
-    protected $treeConfig = ['deep' => null, 'field' => 'parent_id', 'key' => 'id', 'value' => 'name', 'sortField' => 'sort'];
+    protected $tree = ['name' => 'name', 'pk' => 'id', 'fk' => 'parent_id'];
 
-    public function scopeTree($query, array $config = [])
+    public function scopeDeep(Builder $query, $deep) {
+        return $query->where('deep', '<=', $this->treeConfig['deep']);
+    }
+
+    public function scopeTree(Builder $query, string $sortField = 'sort', string $sort = 'DESC')
     {
-        $this->treeConfig = array_merge($this->treeConfig, $config);
-        if ($this->treeConfig['deep']) {
-            $query->where('deep', '<=', $this->treeConfig['deep']);
-        }
-        $query = $query->orderBy($this->treeConfig['field'], 'ASC')
-            ->orderBy($this->treeConfig['sortField'], 'ASC')
-            ->orderBy($this->treeConfig['key'], 'ASC');
+        $query = $query->orderBy($this->tree['fk'], 'ASC')
+            ->orderBy($sortField, $sort)
+            ->orderBy($this->tree['pk'], 'ASC');
 
-        return new Tree($query->get(), [
-            'field' => $this->treeConfig['field'],
-            'key' => $this->treeConfig['key'],
-            'value' => $this->treeConfig['value'],
-        ]);
+        return new Tree($query->get(), ...$this->tree);
     }
 
     public static function bootTreeTrait()
@@ -58,48 +55,55 @@ trait TreeTrait
      */
     public function updateDeep()
     {
-        $deep = static::select('deep')->where(['id' => $this->{$this->treeConfig['field']}])->value('deep');
+        $fk = $this->getAttribute($this->tree['fk']);
+        $pk = $this->getAttribute($this->tree['pk']);
+        $deep = static::select('deep')->where($this->tree['fk'], $fk)->value('deep');
 
         $this->setAttribute('deep', $deep ? $deep + 1 : 1);
         $deep = $this->deep - $this->getOriginal('deep');
 
         if ($this->exists && $deep) {
-            $children = static::tree()->range()->children($this->id)->pluck('id');
+            $children = static::tree()->children($pk)->pluck($this->tree['pk']);
             if ($children) {
-                $this->whereIn('id', $children)->increment('deep', $deep);
+                $this->whereIn($this->tree['pk'], $children)->increment('deep', $deep);
             }
         }
     }
 
     public function updateValidate()
     {
+        $fk = $this->getAttribute($this->tree['fk']);
+        $pk = $this->getAttribute($this->tree['pk']);
         $validatorFactory = ApplicationContext::getContainer()->get(ValidatorFactoryInterface::class);
 
-        $data = ['parent_id' => $this->{$this->treeConfig['field']}];
+        $data = [$this->tree['fk'] => $fk];
         $rules = [];
         if ($this->exists) {
-            $rules[] = Rule::notIn(static::tree()->range()->children($this->id)->pluck('id')->push($this->id));
+            $ids = static::tree()->children($pk)->pluck($this->tree['pk'])->push($pk);
+            $rules[] = Rule::notIn($ids);
         }
-        if ($this->{$this->treeConfig['field']}) {
-            $rules[] = Rule::exists($this->table, 'id')->where('id', $this->{$this->treeConfig['field']});
+        if ($fk) {
+            $rules[] = Rule::exists($this->table, $this->tree['pk'])->where($this->tree['pk'], $fk);
         }
 
         if ($rules) {
             $validator = $validatorFactory->make($data, [
-                'parent_id' => $rules,
+                $this->tree['fk'] => $rules,
             ])->validate();
         }
     }
 
     public function deleteChildren()
     {
+        $fk = $this->getAttribute($this->tree['fk']);
+        $pk = $this->getAttribute($this->tree['pk']);
         if ($this->deleteChildren) {
-            $children = static::tree()->range()->children($this->id);
+            $children = static::tree()->children($pk)->pluck($this->tree['pk']);
             if ($children) {
                 static::destroy($children);
             }
         } else {
-            $exist = static::where([$this->treeConfig['field'] => $this->id])->exists();
+            $exist = static::where($this->tree['fk'], $pk)->exists();
             if ($exist) {
                 // need delete children
                 throw new \RuntimeException('Please delete children or move children.');
