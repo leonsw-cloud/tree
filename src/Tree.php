@@ -25,11 +25,11 @@ class Tree
 
 
 
-    public $group;
+    protected $group;
 
     protected $pkFkMap;
 
-    public $context;
+    protected $context;
 
     protected $contextFk;
 
