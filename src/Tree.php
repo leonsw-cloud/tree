@@ -196,36 +196,26 @@ class Tree
      */
     public function parents(int $id): self
     {
-        // 考虑 except()->paths()
-        // 考虑 children()->paths()
-        //$this->spcer = false;
-        $context = $this->parentsRecursive($id);
 
-        krsort($context);
         $this->context = [];
-        foreach ($context as $model) {
-            $fk = $model[$this->fk];
-            $pk = $model[$this->pk];
-            $this->context[$fk][$pk] = $model;
-        }
-
-        return $this;
-    }
-
-    protected function parentsRecursive(int $id): array
-    {
-        // 应该有改进的余地
-        $context = [];
-        foreach ($this->group as $fk => $models) {
-            foreach ($models as $pk => $model) {
-                if ($id == $pk) {
-                    $context[] = $model;
-                    $context = array_merge($context, $this->parentsRecursive($model[$this->fk]));
-                    break 2;
+        $nextId = $id;
+        while (true) {
+            $fk = $this->fk($nextId);
+            $models = $this->group[$fk] ?? [];
+            foreach ($models as $id => $model) {
+                if ($id === $nextId) {
+                    $this->context[$fk][$id] = $model;
                 }
             }
+            if ($fk === 0) break;
+            $nextId = $fk;
         }
-        return $context;
+        ksort($this->context);
+
+        // 不包含自己
+        //array_pop($this->context);
+
+        return $this;
     }
 
     public function spcer(): self
