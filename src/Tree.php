@@ -105,10 +105,8 @@ class Tree
         // 考虑 children()->levels()
         if ($fun === null) {
             $fun = function ($model, $children) {
-                if ($children) {
-                    $model['children'] = collect($children);
+                $model['children'] = collect($children);
                     //$model['children'] = collect($children);
-                }
                 return $model;
             };
         }
@@ -126,8 +124,10 @@ class Tree
                 $return = null;
                 if (isset($this->context[$id])) {
                     $return = $this->levelsRecursive($fun, $id);
+                    $models[] = $fun($model, $return);
+                } else {
+                    $models[] = $model;
                 }
-                $models[] = $fun($model, $return);
             }
         }
         return $models;
@@ -176,8 +176,22 @@ class Tree
     /**
      * 最后一级.
      */
-    public function ends(): array
+    public function ends(): object
     {
+        $fks = [$this->contextFk ?: 0];
+        $models = [];
+        while (!is_null($fk = array_shift($fks))) {
+            foreach ($this->context[$fk] as $id => $model) {
+                if (isset($this->context[$id])) {
+                    //$models[] = $fun($model, $this->context[$id]);
+                    $fks[] = $id;
+                } else {
+                    $models[] = $model;
+                }
+            }
+        }
+        return collect($models);
+
         $context = [];
         foreach ($this->context as $fk => $models) {
             foreach ($models as $id => $model) {
@@ -194,7 +208,7 @@ class Tree
      * 获取当前节点的路径数组 一般可以用于 breadcrumbs.
      * @param $id
      */
-    public function parents(int $id): self
+    public function parents(int $id, bool $self = false): self
     {
 
         $this->context = [];
@@ -213,7 +227,9 @@ class Tree
         ksort($this->context);
 
         // 不包含自己
-        //array_pop($this->context);
+        if (!$self) {
+            array_pop($this->context);
+        }
 
         return $this;
     }
