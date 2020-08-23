@@ -17,36 +17,36 @@ namespace Leonsw\Tree;
 class Tree
 {
 
-    protected $value;
+    protected $name;
 
-    protected $field;
+    protected $fk;
 
-    protected $key;
+    protected $pk;
 
 
 
     protected $group;
 
-    protected $map;
+    protected $pkFkMap;
 
     protected $context;
 
-    protected $contextParenetId;
+    protected $contextFk;
 
-    public function __construct(array $models, string $value = 'name', string $field = 'parent_id', string $key = 'id')
+    public function __construct(array $models, string $name = 'name', string $fk = 'parent_id', string $pk = 'id')
     {
-        $this->field = $field;
-        $this->key = $key;
-        $this->value = $value;
+        $this->fk = $fk;
+        $this->pk = $pk;
+        $this->name = $name;
 
         // 手动排序 防止数据库那边排序有问题
-        array_multisort(array_column($models, $this->field), SORT_ASC, $models);
+        array_multisort(array_column($models, $this->fk), SORT_ASC, $models);
 
-        foreach ($models as $key => $model) {
-            $parentId = $model[$this->field];
-            $key = $model[$this->key];
-            $this->group[$parentId][$key] = $model;
-            $this->map[$key] = $parentId;
+        foreach ($models as $model) {
+            $fk = $model[$this->fk];
+            $pk = $model[$this->pk];
+            $this->group[$fk][$pk] = $model;
+            $this->pkFkMap[$pk] = $fk;
         }
         $this->context = $this->group;
     }
@@ -54,26 +54,26 @@ class Tree
     protected function reset(): void
     {
         $this->context = $this->group;
-        $this->contextParenetId = null;
+        $this->contextFk = null;
         $this->spcer = false;
     }
 
-    protected function parentId(int $id): int
+    protected function fk(int $pk): int
     {
-        return $this->map[$id] ?? -1;
+        return $this->pkFkMap[$pk] ?? -1;
     }
 
     /**
      * 生成标准树.
      */
-    protected function generate(int $parentId = 0): array
+    protected function generate(int $fk = 0): array
     {
         // $data 考虑使用别的形式 $this->tempData
         $models = [];
-        if (isset($this->context[$parentId])) {
-            foreach ($this->context[$parentId] as $key => $model) {
+        if (isset($this->context[$fk])) {
+            foreach ($this->context[$fk] as $key => $model) {
                 $models[$key] = $model;
-                if (isset($this->context[$model[$this->key]])) {
+                if (isset($this->context[$model[$this->pk]])) {
                     $return = $this->generate($model['id']);
                     $models = $models + $return;
                 }
@@ -84,7 +84,7 @@ class Tree
 
     public function all()
     {
-        $models  = $this->generate($this->contextParenetId ?: 0);
+        $models  = $this->generate($this->contextFk ?: 0);
         $this->reset();
         return collect($models)->values();
     }
@@ -112,20 +112,20 @@ class Tree
                 return $model;
             };
         }
-        $models = $this->levelsRecursive($fun, $this->contextParenetId ?: 0);
+        $models = $this->levelsRecursive($fun, $this->contextFk ?: 0);
         $this->reset();
         return collect($models);
     }
 
 
-    protected function levelsRecursive($fun, int $parentId = 0): array
+    protected function levelsRecursive($fun, int $fk = 0): array
     {
         $models = [];
-        if (isset($this->context[$parentId])) {
-            foreach ($this->context[$parentId] as $key => $model) {
+        if (isset($this->context[$fk])) {
+            foreach ($this->context[$fk] as $id => $model) {
                 $return = null;
-                if (isset($this->context[$model[$this->key]])) {
-                    $return = $this->levelsRecursive($fun, $model[$this->key]);
+                if (isset($this->context[$id])) {
+                    $return = $this->levelsRecursive($fun, $id);
                 }
                 $models[] = $fun($model, $return);
             }
@@ -136,7 +136,7 @@ class Tree
     public function pluck($value, ?string $key = null)
     {
         // 直接使用 pluck 会比较慢一点
-        $models = collect($this->generate($this->contextParenetId ?: 0))->values();
+        $models = collect($this->generate($this->contextFk ?: 0))->values();
         //$models = $models->map(function ($model) {
         //    return ['id' => $model[$this->key], 'value' => $model[$this->value]];
         //});
@@ -150,7 +150,7 @@ class Tree
     public function children(int $id = 0): self
     {
         // 从 group 哪里开始处理 ID
-        $this->contextParenetId = $id;
+        $this->contextFk = $id;
         return $this;
     }
 
@@ -165,9 +165,10 @@ class Tree
         // 考虑使用 $this->tempData
         // 找到当前id 的 parent_id unset($data['parent_id']['id']])
 
+        $fk = $this->fk($id);
         unset($this->context[$id]);
-        unset($this->context[$this->parentId($id)][$id]);
-        $this->contextParenetId = null;
+        unset($this->context[$fk][$id]);
+        $this->contextFk = null;
 
         return $this;
     }
@@ -177,16 +178,16 @@ class Tree
      */
     public function ends(): array
     {
-        $list = [];
-        foreach ($this->context as $parentId => $models) {
+        $context = [];
+        foreach ($this->context as $fk => $models) {
             foreach ($models as $id => $model) {
                 if (! isset($this->context[$id])) {
-                    $list[] = $model;
+                    $context[] = $model;
                 }
             }
         }
         // 最后一级 上下文结构处理？
-        return $list;
+        return $context;
     }
 
     /**
@@ -198,12 +199,14 @@ class Tree
         // 考虑 except()->paths()
         // 考虑 children()->paths()
         //$this->spcer = false;
-        $list = $this->parentsRecursive($id);
+        $context = $this->parentsRecursive($id);
 
-        krsort($list);
+        krsort($context);
         $this->context = [];
-        foreach ($list as $item) {
-            $this->context[$item[$this->field]][$item[$this->key]] = $item;
+        foreach ($context as $model) {
+            $fk = $model[$this->fk];
+            $pk = $model[$this->pk];
+            $this->context[$fk][$pk] = $model;
         }
 
         return $this;
@@ -212,35 +215,35 @@ class Tree
     protected function parentsRecursive(int $id): array
     {
         // 应该有改进的余地
-        $list = [];
-        foreach ($this->group as $parentId => $value) {
-            foreach ($value as $modelId => $model) {
-                if ($id == $modelId) {
-                    $list[] = $model;
-                    $list = array_merge($list, $this->parentsRecursive($model[$this->field]));
+        $context = [];
+        foreach ($this->group as $fk => $models) {
+            foreach ($models as $pk => $model) {
+                if ($id == $pk) {
+                    $context[] = $model;
+                    $context = array_merge($context, $this->parentsRecursive($model[$this->fk]));
                     break 2;
                 }
             }
         }
-        return $list;
+        return $context;
     }
 
     public function spcer(): self
     {
         // 对 context 使用
-        foreach ($this->context as $key => $model) {
-            $lastModel = end($model);
+        foreach ($this->context as $fk => $models) {
+            $lastModel = end($models);
             if ($lastModel['deep'] != 1) {
                 $nbsp = str_repeat(' ', ($lastModel['deep'] - 2) * 4);
-                $model = array_map(function ($item) use ($lastModel, $nbsp) {
-                    if ($lastModel[$this->key] === $item[$this->key]) {
-                        $item[$this->value] = $nbsp . '└─' . $item[$this->value];
+                $models = array_map(function ($model) use ($lastModel, $nbsp) {
+                    if ($lastModel[$this->pk] === $model[$this->pk]) {
+                        $model[$this->name] = $nbsp . '└─' . $model[$this->name];
                     } else {
-                        $item[$this->value] = $nbsp . '├─' . $item[$this->value];
+                        $model[$this->name] = $nbsp . '├─' . $model[$this->name];
                     }
-                    return $item;
-                }, $model);
-                $this->context[$key] = $model;
+                    return $model;
+                }, $models);
+                $this->context[$fk] = $models;
             }
         }
         return $this;
