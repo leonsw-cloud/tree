@@ -153,34 +153,38 @@ class TreeTest extends HttpTestCase
         //$this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
     }
 
-    public function time()
+    public function te2stTime()
     {
         $treeV1 = $this->treeV1();
         $startAt = microtime(true);
-        foreach (range(1, 5) as $index) {
+        foreach (range(1, 500) as $index) {
             //$treeV1->all();
-            //$treeV1->levels();
+            $treeV1->levels();
             //$treeV1->selection('id', 'name')->all();
             //$treeV1->end();
             //$treeV1->except(100);
             //$treeV1->except(14);
             //$a = $treeV1->children(14);
+            //$a = $treeV1->paths(19191);
             //dump(count($a));
         }
         dump('tree v1', microtime(true) - $startAt);
+        //dump($a);
 
         $tree = $this->tree();
         $startAt = microtime(true);
-        foreach (range(1, 5) as $index) {
+        foreach (range(1, 500) as $index) {
             //$tree->spcer()->all();
-            //$tree->levels();
+            $tree->levels();
             //$tree->spcer()->pluck('name', 'id');
             //$tree->ends();
             //$tree->except(14)->all();
             //$a = $tree->children(14)->all();
+            $b = $tree->parents(19191)->all();
             //dump(count($a));
         }
         dump('tree v2', microtime(true) - $startAt);
+        //dump($b);
     }
 
     public function testAll()
@@ -259,7 +263,7 @@ class TreeTest extends HttpTestCase
         $all = $tree->parents(20)->all();
 
         $this->assertEquals([
-            1, 6, 20,
+            1, 6
         ], $all->pluck('id')->toArray());
     }
 
@@ -306,23 +310,22 @@ class TreeTest extends HttpTestCase
 
         $levels = $tree->parents(17)->levels();
 
-
         $this->assertArrayHasKey('children', $levels[0]);
         $this->assertEquals([
             1
         ], collect($levels)->pluck('id')->toArray());
 
-        $this->assertArrayHasKey('children', $levels[0]['children']->get(0));
+        $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0));
         $this->assertEquals([
             5
         ], $levels[0]['children']->pluck('id')->toArray());
 
 
+        $levels = $tree->parents(17, true)->levels();
         $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0)['children']->get(0));
         $this->assertEquals([
             17
         ], $levels[0]['children']->get(0)['children']->pluck('id')->toArray());
-
 
         $levels = $tree->levels(function ($model, $children) {
             if ($children) {
@@ -420,7 +423,7 @@ class TreeTest extends HttpTestCase
         $pluck = $tree->parents(16)->pluck('id');
 
         $this->assertEquals([
-            1, 5, 16,
+            1, 5
         ], $pluck->toArray());
 
 
@@ -430,8 +433,62 @@ class TreeTest extends HttpTestCase
         $this->assertEquals([
             'Name 1',
             '└─Name 5',
-            '    └─Name 16',
         ], $pluck->toArray());
+    }
+
+    public function testEnds()
+    {
+        $tree = $this->tree();
+        $ends = $tree->ends();
+        $this->assertEquals([
+            13, 14, 15,
+            16, 17, 18,
+            19, 20, 21,
+
+            22, 23, 24,
+            25, 26, 27,
+            28, 29, 30,
+
+            31, 32, 33,
+            34, 35, 36,
+            37, 38, 39,
+        ], $ends->pluck('id')->toArray());
+
+
+        $ends = $tree->children(5)->ends();
+        $this->assertEquals([
+            16, 17, 18,
+        ], $ends->pluck('id')->toArray());
+
+
+        $ends = $tree->except(5)->ends();
+        $this->assertEquals([
+            13, 14, 15,
+            19, 20, 21,
+
+            22, 23, 24,
+            25, 26, 27,
+            28, 29, 30,
+
+            31, 32, 33,
+            34, 35, 36,
+            37, 38, 39,
+        ], $ends->pluck('id')->toArray());
+
+        $ends = $tree->except(5)->except(2)->ends();
+        $this->assertEquals([
+            13, 14, 15,
+            19, 20, 21,
+
+            31, 32, 33,
+            34, 35, 36,
+            37, 38, 39,
+        ], $ends->pluck('id')->toArray());
+
+        $ends = $tree->parents(21)->ends();
+        $this->assertEquals([
+            6
+        ], $ends->pluck('id')->toArray());
     }
 
     public function tes1tAll()
