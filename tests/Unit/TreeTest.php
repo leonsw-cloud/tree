@@ -135,7 +135,7 @@ class TreeTest extends HttpTestCase
     public function tree()
     {
         $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')
-            ->orderBy('parent_id', 'ASC')->orderBy('sort', 'DESC')->orderBy('id', 'ASC')->get()->toArray();
+            ->orderBy('parent_id', 'ASC')->orderBy('sort', 'DESC')->orderBy('id', 'ASC')->get();
 
         $tree = new Tree($data);
         return $tree;

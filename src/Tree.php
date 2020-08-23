@@ -23,8 +23,6 @@ class Tree
 
     protected $pk;
 
-
-
     protected $group;
 
     protected $pkFkMap;
@@ -39,7 +37,7 @@ class Tree
         $this->pk = $pk;
         $this->name = $name;
 
-        // 手动排序 防止数据库那边排序有问题
+        // 不能使用手动排序 会乱续 排的话需要 parent_id sort created_at 一起排
         //array_multisort(array_column($models, $this->fk), SORT_ASC, $models);
 
         foreach ($models as $model) {
