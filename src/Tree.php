@@ -44,19 +44,20 @@ class Tree
             $fk = $model[$this->fk];
             $pk = $model[$this->pk];
             $this->group[$fk][$pk] = $model;
-            $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
             $this->pkFkMap[$pk] = $fk;
         }
+        $this->context = $this->group;
     }
 
     protected function reset(): void
     {
-        $this->context = [];
-        foreach ($this->group as $fk => $models) {
-            foreach ($models as $pk => $model) {
-                $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
-            }
-        }
+        //$this->context = [];
+        //foreach ($this->group as $fk => $models) {
+        //    foreach ($models as $pk => $model) {
+        //        $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
+        //    }
+        //}
+        $this->context = $this->group;
         $this->contextFk = null;
     }
 
@@ -73,10 +74,10 @@ class Tree
         // $data 考虑使用别的形式 $this->tempData
         $models = [];
         if (isset($this->context[$fk])) {
-            foreach ($this->context[$fk] as $key => $model) {
-                $models[$key] = $model;
-                if (isset($this->context[$model[$this->pk]])) {
-                    $return = $this->generate($model['id']);
+            foreach ($this->context[$fk] as $pk => $model) {
+                $models[$pk] = $model;
+                if (isset($this->context[$pk])) {
+                    $return = $this->generate($pk);
                     $models = $models + $return;
                 }
             }
@@ -120,11 +121,11 @@ class Tree
     {
         $models = [];
         if (isset($this->context[$fk])) {
-            foreach ($this->context[$fk] as $id => $model) {
-                $return = null;
-                if (isset($this->context[$id])) {
+            foreach ($this->context[$fk] as $pk => $model) {
+                $model = is_object($model) ? clone $model : $model;
+                if (isset($this->context[$pk])) {
                     // 存在下级才执行
-                    $return = $this->levelsRecursive($fun, $id);
+                    $return = $this->levelsRecursive($fun, $pk);
                     $models[] = $fun($model, $return);
                 } else {
                     $models[] = $model;
@@ -137,9 +138,9 @@ class Tree
     public function pluck($value, ?string $key = null)
     {
         // 直接使用 pluck 会比较慢一点
-        $models = collect($this->generate($this->contextFk ?: 0))->values();
+        $models = collect($this->generate($this->contextFk ?: 0));
         //$models = $models->map(function ($model) {
-        //    return ['id' => $model[$this->key], 'value' => $model[$this->value]];
+        //    return ['id' => $model[$this->pk], 'value' => $model[$this->name]];
         //});
         $this->reset();
         return $models->pluck($value, $key);
@@ -184,7 +185,6 @@ class Tree
         while (!is_null($fk = array_shift($fks))) {
             foreach ($this->context[$fk] as $id => $model) {
                 if (isset($this->context[$id])) {
-                    //$models[] = $fun($model, $this->context[$id]);
                     $fks[] = $id;
                 } else {
                     $models[] = $model;
