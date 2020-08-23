@@ -134,7 +134,8 @@ class TreeTest extends HttpTestCase
 
     public function tree()
     {
-        $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
+        $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')
+            ->orderBy('parent_id', 'ASC')->orderBy('sort', 'DESC')->orderBy('id', 'ASC')->get()->toArray();
 
         $tree = new Tree($data);
         return $tree;
@@ -155,48 +156,113 @@ class TreeTest extends HttpTestCase
 
     public function te2stTime()
     {
-        $treeV1 = $this->treeV1();
-        $startAt = microtime(true);
-        foreach (range(1, 500) as $index) {
-            //$treeV1->all();
-            $treeV1->levels();
-            //$treeV1->selection('id', 'name')->all();
-            //$treeV1->end();
-            //$treeV1->except(100);
-            //$treeV1->except(14);
-            //$a = $treeV1->children(14);
-            //$a = $treeV1->paths(19191);
-            //dump(count($a));
-        }
-        dump('tree v1', microtime(true) - $startAt);
+        //$treeV1 = $this->treeV1();
+        //$startAt = microtime(true);
+        //foreach (range(1, 500) as $index) {
+        //    //$treeV1->all();
+        //    $treeV1->levels();
+        //    //$treeV1->selection('id', 'name')->all();
+        //    //$treeV1->end();
+        //    //$treeV1->except(100);
+        //    //$treeV1->except(14);
+        //    //$a = $treeV1->children(14);
+        //    //$a = $treeV1->paths(19191);
+        //    //dump(count($a));
+        //}
+        //dump('tree v1', microtime(true) - $startAt);
         //dump($a);
+
+
+        $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')->get();
 
         $tree = $this->tree();
         $startAt = microtime(true);
-        foreach (range(1, 500) as $index) {
-            //$tree->spcer()->all();
-            $tree->levels();
+        foreach (range(1, 1) as $index) {
+            ////$tree->spcer()->all();
+            //$levels = $tree->listToTree($data);
+            $levels = $tree->levels();
+            //$this->listToTree($data);
             //$tree->spcer()->pluck('name', 'id');
             //$tree->ends();
             //$tree->except(14)->all();
             //$a = $tree->children(14)->all();
-            $b = $tree->parents(19191)->all();
+            //$b = $tree->parents(19191)->all();
+
             //dump(count($a));
         }
         dump('tree v2', microtime(true) - $startAt);
+        //dump($levels);
         //dump($b);
+    }
+
+    public function te2stLL()
+    {
+
+        $tree = $this->tree();
+        dump('11111', $tree->group, '__11111', $tree->context);
+        $all = $tree->except(1)->all();
+        dump('22222', $tree->group, '__22222', $tree->context);
+
+        $this->assertEquals([
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $all->pluck('id')->toArray());
+        //
+        $all = $tree->except(2)->all();
+        dump('33333', $tree->group, '__33333', $tree->context);
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $all->pluck('id')->toArray());
+
+        //$levels = $tree->levels();
+        //$levels = $tree->parents(17)->levels();
+        //$levels = $tree->levels();
+        //$levels = $tree->parents(17)->levels();
+        //$levels = $tree->levels();
+        //$levels = $tree->parents(17)->levels();
+        //$levels = $tree->levels();
+        //$levels = $tree->parents(17)->levels();
+        //$levels = $tree->levels();
+        //$levels = $tree->parents(17)->levels();
+        //
+        //$this->assertArrayHasKey('children', $levels[0]);
+        //$this->assertEquals([
+        //    1
+        //], $levels->pluck('id')->toArray());
+        //
+        //$this->assertFalse(isset($levels[0]['children'][0]['children']));
+        //$this->assertEquals([
+        //    5
+        //], array_map(function ($model) {
+        //    return $model['id'];
+        //}, $levels[0]['children']));
     }
 
     public function testAll()
     {
         $tree = $this->tree();
         $all = $tree->all();
+
         $this->assertEquals([
             'id' => 1,
             'parent_id' => 0,
             'name' => 'Name 1',
             'deep' => 1,
-        ], $all->get(0));
+        ], $all->toArray()[0]);
 
         $this->assertEquals($this->treeAllId, $all->pluck('id')->toArray());
         $this->assertEquals($this->treeAllName, $all->pluck('name')->toArray());
@@ -279,31 +345,36 @@ class TreeTest extends HttpTestCase
 
         $this->assertArrayHasKey('children', $levels[0]);
         $this->assertEquals(3, count($levels[0]['children']));
-        $this->assertEquals(3, $levels[0]['children']->count());
         $this->assertEquals([
             4, 5, 6
-        ], $levels[0]['children']->pluck('id')->toArray());
+        ], array_map(function ($model) {
+            return $model['id'];
+        }, $levels[0]['children']));
 
 
-        $this->assertArrayHasKey('children', $levels[0]['children']->get(1));
-        $this->assertEquals(3, $levels[0]['children']->get(1)['children']->count()); // 5
+        $this->assertArrayHasKey('children', $levels[0]['children'][1]);
+        $this->assertEquals(3, count($levels[0]['children'][1]['children'])); // 5
         $this->assertEquals([
             16, 17, 18
-        ], $levels[0]['children']->get(1)['children']->pluck('id')->toArray());
+        ], array_map(function ($model) {
+            return $model['id'];
+        }, $levels[0]['children'][1]['children']));
 
 
         $levels = $tree->except(5)->levels();
 
         $this->assertEquals([
             4, 6
-        ], $levels[0]['children']->pluck('id')->toArray());
+        ], array_map(function ($model) {
+            return $model['id'];
+        }, $levels[0]['children']));
 
 
         $levels = $tree->children(5)->levels();
 
         $this->assertEquals([
             16, 17 ,18
-        ], collect($levels)->pluck('id')->toArray());
+        ], $levels->pluck('id')->toArray());
 
         $this->assertArrayNotHasKey('children', $levels[0]);
 
@@ -313,24 +384,26 @@ class TreeTest extends HttpTestCase
         $this->assertArrayHasKey('children', $levels[0]);
         $this->assertEquals([
             1
-        ], collect($levels)->pluck('id')->toArray());
+        ], $levels->pluck('id')->toArray());
 
-        $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0));
+        $this->assertFalse(isset($levels[0]['children'][0]['children']));
         $this->assertEquals([
             5
-        ], $levels[0]['children']->pluck('id')->toArray());
+        ], array_map(function ($model) {
+            return $model['id'];
+        }, $levels[0]['children']));
 
 
         $levels = $tree->parents(17, true)->levels();
-        $this->assertArrayNotHasKey('children', $levels[0]['children']->get(0)['children']->get(0));
+        $this->assertArrayNotHasKey('children', $levels[0]['children'][0]['children'][0]);
         $this->assertEquals([
             17
-        ], $levels[0]['children']->get(0)['children']->pluck('id')->toArray());
+        ], array_map(function ($model) {
+            return $model['id'];
+        }, $levels[0]['children'][0]['children']));
 
         $levels = $tree->levels(function ($model, $children) {
-            if ($children) {
-                $model['child'] = collect($children);
-            }
+            $model['child'] = collect($children);
             return $model;
         });
 
@@ -340,12 +413,18 @@ class TreeTest extends HttpTestCase
 
         // spcer ...
         $levels = $tree->spcer()->levels();
+
         $this->assertEquals([
             'id' => 17,
             'parent_id' => 5,
             'name' => '    ├─Name 17',
             'deep' => 3,
-        ], $levels->get(0)['children']->get(1)['children']->get(1));
+        ], [
+            'id' => $levels[0]['children'][1]['children'][1]['id'],
+            'parent_id' => $levels[0]['children'][1]['children'][1]['parent_id'],
+            'name' => $levels[0]['children'][1]['children'][1]['name'],
+            'deep' => $levels[0]['children'][1]['children'][1]['deep'],
+        ]);
     }
 
     public function testPluck()

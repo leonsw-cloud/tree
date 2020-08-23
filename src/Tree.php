@@ -25,37 +25,41 @@ class Tree
 
 
 
-    protected $group;
+    public $group;
 
     protected $pkFkMap;
 
-    protected $context;
+    public $context;
 
     protected $contextFk;
 
-    public function __construct(array $models, string $name = 'name', string $fk = 'parent_id', string $pk = 'id')
+    public function __construct($models, string $name = 'name', string $fk = 'parent_id', string $pk = 'id')
     {
         $this->fk = $fk;
         $this->pk = $pk;
         $this->name = $name;
 
         // 手动排序 防止数据库那边排序有问题
-        array_multisort(array_column($models, $this->fk), SORT_ASC, $models);
+        //array_multisort(array_column($models, $this->fk), SORT_ASC, $models);
 
         foreach ($models as $model) {
             $fk = $model[$this->fk];
             $pk = $model[$this->pk];
             $this->group[$fk][$pk] = $model;
+            $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
             $this->pkFkMap[$pk] = $fk;
         }
-        $this->context = $this->group;
     }
 
     protected function reset(): void
     {
-        $this->context = $this->group;
+        $this->context = [];
+        foreach ($this->group as $fk => $models) {
+            foreach ($models as $pk => $model) {
+                $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
+            }
+        }
         $this->contextFk = null;
-        $this->spcer = false;
     }
 
     protected function fk(int $pk): int
@@ -84,8 +88,9 @@ class Tree
 
     public function all()
     {
-        $models  = $this->generate($this->contextFk ?: 0);
+        $models = $this->generate($this->contextFk ?: 0);
         $this->reset();
+
         return collect($models)->values();
     }
 
@@ -103,13 +108,13 @@ class Tree
         // 考虑 children()->levels()
         if ($fun === null) {
             $fun = function ($model, $children) {
-                $model['children'] = collect($children);
+                $model['children'] = $children;
                 return $model;
             };
         }
         $models = $this->levelsRecursive($fun, $this->contextFk ?: 0);
         $this->reset();
-        return collect($models);
+        return collect($models)->values();
     }
 
 
