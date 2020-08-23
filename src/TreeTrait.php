@@ -17,7 +17,8 @@ use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\Rule;
 
 /**
- * @method Tree tree()
+ * @method Builder deep(int $deep)
+ * @method Tree tree(string $sort = 'sort', string $direction = 'DESC')
  */
 trait TreeTrait
 {
@@ -25,14 +26,14 @@ trait TreeTrait
 
     protected $tree = ['name' => 'name', 'pk' => 'id', 'fk' => 'parent_id'];
 
-    public function scopeDeep(Builder $query, $deep) {
-        return $query->where('deep', '<=', $this->treeConfig['deep']);
+    public function scopeDeep(Builder $query, int $deep) {
+        return $query->where('deep', '<=', $deep);
     }
 
-    public function scopeTree(Builder $query, string $sortField = 'sort', string $sort = 'DESC')
+    public function scopeTree(Builder $query, string $sort = 'sort', string $direction = 'DESC')
     {
         $query = $query->orderBy($this->tree['fk'], 'ASC')
-            ->orderBy($sortField, $sort)
+            ->orderBy($sort, $direction)
             ->orderBy($this->tree['pk'], 'ASC');
 
         return new Tree($query->get(), ...$this->tree);
