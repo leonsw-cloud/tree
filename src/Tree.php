@@ -51,12 +51,6 @@ class Tree
 
     protected function reset(): void
     {
-        //$this->context = [];
-        //foreach ($this->group as $fk => $models) {
-        //    foreach ($models as $pk => $model) {
-        //        $this->context[$fk][$pk] = is_object($model) ? clone $model : $model;
-        //    }
-        //}
         $this->context = $this->group;
         $this->contextFk = null;
     }
@@ -71,7 +65,6 @@ class Tree
      */
     protected function generate(int $fk = 0): array
     {
-        // $data 考虑使用别的形式 $this->tempData
         $models = [];
         if (isset($this->context[$fk])) {
             foreach ($this->context[$fk] as $pk => $model) {
@@ -103,8 +96,6 @@ class Tree
      */
     public function levels(Callable $fun = null): object
     {
-        // 排除的ID，可能不会使用 考虑 except()->levels()
-        // 考虑 children()->levels()
         if ($fun === null) {
             $fun = function ($model, $children) {
                 $model['children'] = $children;
@@ -139,9 +130,6 @@ class Tree
     {
         // 直接使用 pluck 会比较慢一点
         $models = collect($this->generate($this->contextFk ?: 0));
-        //$models = $models->map(function ($model) {
-        //    return ['id' => $model[$this->pk], 'value' => $model[$this->name]];
-        //});
         $this->reset();
         return $models->pluck($value, $key);
     }
@@ -164,9 +152,6 @@ class Tree
      */
     public function except(int $id = 0): self
     {
-        // 考虑使用 $this->tempData
-        // 找到当前id 的 parent_id unset($data['parent_id']['id']])
-
         $fk = $this->fk($id);
         unset($this->context[$id]);
         unset($this->context[$fk][$id]);
