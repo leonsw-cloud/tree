@@ -63,32 +63,6 @@ class Tree
         return $this->pkFkMap[$pk] ?? -1;
     }
 
-    function listToTree($models, $root = 0) {
-        // 创建Tree
-        $result = [];
-        if(is_array($models)) {
-            // 创建基于主键的数组引用
-            $refer = [];
-            foreach ($models as $key => $model) {
-                $refer[$model[$this->pk]] =& $models[$key];
-            }
-
-            foreach ($models as $key => $model) {
-                // 判断是否存在parent
-                $parentId =  $model[$this->fk];
-                if ($root == $parentId) {
-                    $result[] =& $models[$key];
-                }else{
-                    if (isset($refer[$parentId])) {
-                        $parent =& $refer[$parentId];
-                        $parent['children'][] =& $models[$key];
-                    }
-                }
-            }
-        }
-        return collect($result);
-    }
-
     /**
      * 生成标准树.
      */
@@ -118,9 +92,7 @@ class Tree
     /**
      * 层级树 levels()
      * levels(function ($model, $children) {
-     *     if($children) {
-     *         $model['children'] = $children;
-     *     }
+     *     $model['children'] = $children;
      *     return $model;
      * });.
      * @param number $id
@@ -132,7 +104,6 @@ class Tree
         if ($fun === null) {
             $fun = function ($model, $children) {
                 $model['children'] = collect($children);
-                    //$model['children'] = collect($children);
                 return $model;
             };
         }
@@ -149,6 +120,7 @@ class Tree
             foreach ($this->context[$fk] as $id => $model) {
                 $return = null;
                 if (isset($this->context[$id])) {
+                    // 存在下级才执行
                     $return = $this->levelsRecursive($fun, $id);
                     $models[] = $fun($model, $return);
                 } else {
@@ -217,17 +189,6 @@ class Tree
             }
         }
         return collect($models);
-
-        $context = [];
-        foreach ($this->context as $fk => $models) {
-            foreach ($models as $id => $model) {
-                if (! isset($this->context[$id])) {
-                    $context[] = $model;
-                }
-            }
-        }
-        // 最后一级 上下文结构处理？
-        return $context;
     }
 
     /**
@@ -260,43 +221,8 @@ class Tree
         return $this;
     }
 
-    public function paths(int $id): self
-    {
-        // 考虑 except()->paths()
-        // 考虑 children()->paths()
-        //$this->spcer = false;
-        $context = $this->parentsRecursive($id);
-
-        krsort($context);
-        $this->context = [];
-        foreach ($context as $model) {
-            $fk = $model[$this->fk];
-            $pk = $model[$this->pk];
-            $this->context[$fk][$pk] = $model;
-        }
-
-        return $this;
-    }
-
-    protected function parentsRecursive(int $id): array
-    {
-        // 应该有改进的余地
-        $context = [];
-        foreach ($this->group as $fk => $models) {
-            foreach ($models as $pk => $model) {
-                if ($id == $pk) {
-                    $context[] = $model;
-                    $context = array_merge($context, $this->parentsRecursive($model[$this->fk]));
-                    break 2;
-                }
-            }
-        }
-        return $context;
-    }
-
     public function spcer(): self
     {
-        // 对 context 使用
         foreach ($this->context as $fk => $models) {
             $lastModel = end($models);
             if ($lastModel['deep'] != 1) {
