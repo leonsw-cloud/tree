@@ -135,7 +135,6 @@ class Tree
     }
     /**
      * 子节点.
-     * @param number $id
      */
     public function children(int $id = 0): self
     {
@@ -152,10 +151,12 @@ class Tree
      */
     public function except(int $id = 0): self
     {
-        $fk = $this->fk($id);
-        unset($this->context[$id]);
-        unset($this->context[$fk][$id]);
-        $this->contextFk = null;
+        if ($id !== 0) {
+            $fk = $this->fk($id);
+            unset($this->context[$id]);
+            unset($this->context[$fk][$id]);
+            $this->contextFk = null;
+        }
 
         return $this;
     }
