@@ -128,8 +128,8 @@ class TreeTest extends HttpTestCase
         require_once dirname(__DIR__) . '/Model/Tree.php';
         require_once dirname(__DIR__) . '/Model/TreeV1.php';
 
-        //$this->command('migrate', ['--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
-        //$this->command('db:seed', ['--path' => dirname(__DIR__) . '/database/seeders', '--realpath' => 1]);
+        $this->command('migrate', ['--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
+        $this->command('db:seed', ['--path' => dirname(__DIR__) . '/database/seeders', '--realpath' => 1]);
     }
 
     public function tree()
@@ -154,7 +154,7 @@ class TreeTest extends HttpTestCase
 
     public function tearDown()
     {
-        //$this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
+        $this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
     }
 
     public function te2stTime()
