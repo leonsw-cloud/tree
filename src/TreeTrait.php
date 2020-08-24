@@ -22,7 +22,7 @@ use Hyperf\Validation\Rule;
  */
 trait TreeTrait
 {
-    protected $deleteChildren = false;
+    public $deleteChildren = false;
 
     protected $tree = ['name' => 'name', 'pk' => 'id', 'fk' => 'parent_id'];
 
@@ -36,7 +36,7 @@ trait TreeTrait
             ->orderBy($sort, $direction)
             ->orderBy($this->tree['pk'], 'ASC');
 
-        return new Tree($query->get(), ...$this->tree);
+        return new Tree($query->get(), $this->tree['name'], $this->tree['fk'], $this->tree['pk']);
     }
 
     public static function bootTreeTrait()
@@ -58,7 +58,7 @@ trait TreeTrait
     {
         $fk = $this->getAttribute($this->tree['fk']);
         $pk = $this->getAttribute($this->tree['pk']);
-        $deep = static::select('deep')->where($this->tree['fk'], $fk)->value('deep');
+        $deep = static::select('deep')->where($this->tree['pk'], $fk)->value('deep');
 
         $this->setAttribute('deep', $deep ? $deep + 1 : 1);
         $deep = $this->deep - $this->getOriginal('deep');
