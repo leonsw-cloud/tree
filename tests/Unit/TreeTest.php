@@ -132,6 +132,11 @@ class TreeTest extends HttpTestCase
         $this->command('db:seed', ['--path' => dirname(__DIR__) . '/database/seeders', '--realpath' => 1]);
     }
 
+    public function tearDown()
+    {
+        $this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
+    }
+
     public function tree()
     {
         $data = \LeonswTests\Tree\Model\Tree::select('id', 'parent_id', 'name', 'deep')
@@ -150,11 +155,6 @@ class TreeTest extends HttpTestCase
 
         $tree = new \Leonsw\Tree\V1\Tree($data, ['field' => 'parent_id', 'key' => 'id', 'value' => 'name']);
         return $tree;
-    }
-
-    public function tearDown()
-    {
-        $this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
     }
 
     public function te2stTime()
@@ -226,6 +226,57 @@ class TreeTest extends HttpTestCase
             16, 17, 18,
         ], $all->pluck('id')->toArray());
 
+        $all = $tree->children(0)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $all->pluck('id')->toArray());
+
+        $all = $tree->except(0)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $all->pluck('id')->toArray());
+
+        $all = $tree->except(0)->except(0)->all();
+
+        $this->assertEquals([
+            1,
+            4, 13, 14, 15,
+            5, 16, 17, 18,
+            6, 19, 20, 21,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
+            3,
+            10, 31, 32, 33,
+            11, 34, 35, 36,
+            12, 37, 38, 39,
+        ], $all->pluck('id')->toArray());
+
         $all = $tree->except(1)->all();
 
         $this->assertEquals([
@@ -273,6 +324,18 @@ class TreeTest extends HttpTestCase
 
         $this->assertEquals([
             1, 6
+        ], $all->pluck('id')->toArray());
+
+
+        $all = $tree->parents(0)->all();
+
+        $this->assertEquals([
+        ], $all->pluck('id')->toArray());
+
+
+        $all = $tree->parents(0, true)->all();
+
+        $this->assertEquals([
         ], $all->pluck('id')->toArray());
     }
 

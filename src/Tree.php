@@ -55,9 +55,9 @@ class Tree
         $this->contextFk = null;
     }
 
-    protected function fk(int $pk): int
+    protected function fk(int $pk): ?int
     {
-        return $this->pkFkMap[$pk] ?? -1;
+        return $this->pkFkMap[$pk] ?? null;
     }
 
     /**
@@ -188,17 +188,16 @@ class Tree
     {
 
         $this->context = [];
-        $nextId = $id;
-        while (true) {
-            $fk = $this->fk($nextId);
+        $ids = [$id];
+        while (!is_null($nextId = array_shift($ids))) {
+            $fk = (int) $this->fk($nextId);
             $models = $this->group[$fk] ?? [];
             foreach ($models as $id => $model) {
                 if ($id === $nextId) {
                     $this->context[$fk][$id] = $model;
                 }
             }
-            if ($fk === 0) break;
-            $nextId = $fk;
+            if ($fk !== 0) $ids[] = $fk;
         }
         ksort($this->context);
 
