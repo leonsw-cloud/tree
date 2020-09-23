@@ -39,14 +39,16 @@ trait TreeTrait
         return new Tree($query->get(), $this->tree['name'], $this->tree['fk'], $this->tree['pk']);
     }
 
-    public static function bootTreeTrait()
+    public function bootTreeTrait()
     {
-        static::onSaving(function (self $model) {
+        $this->onSaving(function ($event) {
+            $model = $event->getModel();
             $model->updateValidate();
             $model->updateDeep();
         });
 
-        static::onDeleting(function (self $model) {
+        $this->onDeleting(function ($event) {
+            $model = $event->getModel();
             $model->deleteChildren();
         });
     }
