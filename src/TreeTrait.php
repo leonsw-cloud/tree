@@ -41,14 +41,12 @@ trait TreeTrait
 
     public function bootTreeTrait()
     {
-        $this->onSaving(function ($event) {
-            $model = $event->getModel();
+        $this->onSaving(function ($model) {
             $model->updateValidate();
             $model->updateDeep();
         });
 
-        $this->onDeleting(function ($event) {
-            $model = $event->getModel();
+        $this->onDeleting(function ($model) {
             $model->deleteChildren();
         });
     }
