@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 /**
- * This file is part of Hyperf.
+ * This file is part of Leonsw.
  *
- * @link     https://www.hyperf.io
- * @document https://doc.hyperf.io
- * @contact  group@hyperf.io
- * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ * @link     https://leonsw.com
+ * @document https://docs.leonsw.com
+ * @contact  leonsw.com@gmail.com
+ * @license  https://leonsw.com/LICENSE
  */
-
 namespace LeonswTests\Tree\Unit;
 
 use Leonsw\Tests\HttpTestCase;
@@ -21,8 +20,6 @@ use LeonswTests\Tree\Model\TreeV1;
  */
 class TreeV1Test extends HttpTestCase
 {
-
-
     protected $treeAllName = [
         'Name 1',
         'Name 4',
@@ -107,7 +104,6 @@ class TreeV1Test extends HttpTestCase
         '    └─Name 39',
     ];
 
-
     protected $treeAllId = [
         1,
         4, 13, 14, 15,
@@ -132,11 +128,8 @@ class TreeV1Test extends HttpTestCase
     {
         $data = TreeV1::select('id', 'parent_id', 'name', 'deep')->get()->toArray();
 
-        $tree = new \Leonsw\Tree\V1\Tree($data, ['field' => 'parent_id', 'key' => 'id', 'value' => 'name']);
-        return $tree;
+        return new \Leonsw\Tree\V1\Tree($data, ['field' => 'parent_id', 'key' => 'id', 'value' => 'name']);
     }
-
-
 
     public function testAll()
     {
@@ -149,7 +142,6 @@ class TreeV1Test extends HttpTestCase
             'name' => 'Name 1',
             'deep' => 1,
         ], $all->get(0));
-
 
         $this->assertEquals($this->treeAllId, $all->pluck('id')->toArray());
         $this->assertEquals($this->treeAllName, $all->pluck('name')->toArray());
@@ -247,22 +239,20 @@ class TreeV1Test extends HttpTestCase
         $this->assertEquals(3, count($levels[0]['children']));
         $this->assertEquals(3, $levels[0]['children']->count());
         $this->assertEquals([
-            4, 5, 6
+            4, 5, 6,
         ], $levels[0]['children']->pluck('id')->toArray());
-
 
         $this->assertArrayHasKey('children', $levels[0]['children']->get(1));
         $this->assertEquals(3, $levels[0]['children']->get(1)['children']->count()); // 5
         $this->assertEquals([
-            16, 17, 18
+            16, 17, 18,
         ], $levels[0]['children']->get(1)['children']->pluck('id')->toArray());
-
 
         $levels = $tree->levels(null, 5);
         $levels = collect($levels);
 
         $this->assertEquals([
-            4, 6
+            4, 6,
         ], $levels[0]['children']->pluck('id')->toArray());
 
         $levels = $tree->levels(function ($model, $children) {
@@ -285,22 +275,19 @@ class TreeV1Test extends HttpTestCase
         $pluck = $tree->spcer(false)->selection()->all();
         $this->assertEquals($this->treeAllId, $pluck->pluck('id')->toArray());
 
-
         $pluck = $tree->spcer(false)->selection()->all();
         $this->assertEquals($this->treeAllName, $pluck->pluck('value')->toArray());
-
 
         $pluck = $tree->spcer(false)->selection()->all();
         $this->assertEquals([
             'id' => 1,
-            'value' => 'Name 1'
+            'value' => 'Name 1',
         ], $pluck->values()->toArray()[0]);
 
         $this->assertEquals([
             'id' => 39,
-            'value' => 'Name 39'
+            'value' => 'Name 39',
         ], $pluck->values()->toArray()[38]);
-
 
         $pluck = $tree->children(2)->pluck('id');
 
@@ -357,4 +344,3 @@ class TreeV1Test extends HttpTestCase
         ], $pluck->toArray());
     }
 }
-

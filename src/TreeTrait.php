@@ -26,7 +26,8 @@ trait TreeTrait
 
     protected $tree = ['name' => 'name', 'pk' => 'id', 'fk' => 'parent_id'];
 
-    public function scopeDeep(Builder $query, int $deep) {
+    public function scopeDeep(Builder $query, int $deep)
+    {
         return $query->where('deep', '<=', $deep);
     }
 

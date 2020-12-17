@@ -1,7 +1,14 @@
 <?php
 
 declare(strict_types=1);
-
+/**
+ * This file is part of Leonsw.
+ *
+ * @link     https://leonsw.com
+ * @document https://docs.leonsw.com
+ * @contact  leonsw.com@gmail.com
+ * @license  https://leonsw.com/LICENSE
+ */
 use Hyperf\Database\Seeders\Seeder;
 use LeonswTests\Tree\Model\Tree;
 
@@ -11,8 +18,6 @@ class TreeSeeder extends Seeder
 
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
     public function run()
     {
@@ -31,7 +36,7 @@ class TreeSeeder extends Seeder
     {
         $ids = [];
         foreach (range(1, $count) as $value) {
-            $this->i ++;
+            ++$this->i;
             $model = Tree::create([
                 'parent_id' => $parentId,
                 'name' => 'Name ' . $this->i,

@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 /**
- * This file is part of Hyperf.
+ * This file is part of Leonsw.
  *
- * @link     https://www.hyperf.io
- * @document https://doc.hyperf.io
- * @contact  group@hyperf.io
- * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
+ * @link     https://leonsw.com
+ * @document https://docs.leonsw.com
+ * @contact  leonsw.com@gmail.com
+ * @license  https://leonsw.com/LICENSE
  */
-
 namespace LeonswTests\Tree\Unit;
 
 use Leonsw\Tests\HttpTestCase;
@@ -22,8 +21,6 @@ use LeonswTests\Tree\Model\Tree as Model;
  */
 class TreeTraitTest extends HttpTestCase
 {
-
-
     protected $treeAllName = [
         'Name 1',
         'Name 4',
@@ -108,7 +105,6 @@ class TreeTraitTest extends HttpTestCase
         '    └─Name 39',
     ];
 
-
     protected $treeAllId = [
         1,
         4, 13, 14, 15,
@@ -137,7 +133,6 @@ class TreeTraitTest extends HttpTestCase
         $this->command('migrate:rollback', ['--step' => 1, '--path' => dirname(__DIR__) . '/database/migrations', '--realpath' => 1]);
     }
 
-
     public function testDeep()
     {
         $query = Model::deep(2)->getQuery();
@@ -148,7 +143,7 @@ class TreeTraitTest extends HttpTestCase
                 'operator' => '<=',
                 'value' => 2,
                 'boolean' => 'and',
-            ]
+            ],
         ], $query->wheres);
         $query = Model::deep(1)->getQuery();
         $this->assertEquals([
@@ -158,13 +153,12 @@ class TreeTraitTest extends HttpTestCase
                 'operator' => '<=',
                 'value' => 1,
                 'boolean' => 'and',
-            ]
+            ],
         ], $query->wheres);
     }
 
     public function testTree()
     {
-
         $tree = Model::tree();
         $this->assertInstanceOf(Tree::class, $tree);
 
@@ -180,9 +174,8 @@ class TreeTraitTest extends HttpTestCase
                 'operator' => '<=',
                 'value' => 5,
                 'boolean' => 'and',
-            ]
+            ],
         ], $query->wheres);
-
 
         $this->assertEquals([
             [
@@ -212,10 +205,10 @@ class TreeTraitTest extends HttpTestCase
             3,
             10, 31, 32, 33,
             11, 34, 35, 36,
-                        2,
-                        7, 22, 23, 24,
-                        8, 25, 26, 27,
-                        9, 28, 29, 30,
+            2,
+            7, 22, 23, 24,
+            8, 25, 26, 27,
+            9, 28, 29, 30,
             12, 37, 38, 39,
         ], $tree->pluck('id')->toArray());
 
@@ -225,7 +218,6 @@ class TreeTraitTest extends HttpTestCase
             5, 6, 6, 6,
             5, 6, 6, 6,
         ], $tree->children(2)->pluck('deep')->toArray());
-
 
         $model = $this->updateParentId(2, 0);
         $tree = Model::tree();
@@ -258,9 +250,9 @@ class TreeTraitTest extends HttpTestCase
         $this->assertEquals([
             1,
             5, 16,
-               4, 13, 14, 15,
-                           8, 25, 26, 27,
-               17, 18,
+            4, 13, 14, 15,
+            8, 25, 26, 27,
+            17, 18,
             6, 19, 20, 21,
             2,
             7, 22, 23, 24,
@@ -280,8 +272,6 @@ class TreeTraitTest extends HttpTestCase
         $model = $this->updateParentId(4, 1);
         $model = $this->updateParentId(8, 2);
 
-
-        //
         try {
             $this->updateParentId(1, 1);
         } catch (\Throwable $e) {
@@ -293,7 +283,6 @@ class TreeTraitTest extends HttpTestCase
         } catch (\Throwable $e) {
             $this->assertEquals('The given data was invalid.', $e->getMessage());
         }
-
     }
 
     public function testCreate()
@@ -378,11 +367,9 @@ class TreeTraitTest extends HttpTestCase
 
     public function updateParentId($id, $fk)
     {
-
         $model = Model::find($id);
         $model->parent_id = $fk;
         $model->save();
         return $model;
     }
 }
-
