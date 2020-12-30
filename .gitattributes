@@ -37,6 +37,10 @@
 /phpstan.neon       export-ignore
 /docs               export-ignore
 /tests              export-ignore
+/database           export-ignore
+/.env.dist          export-ignore
+/README.md          export-ignore
+/composer.json      export-ignore
 
 # Avoid merge conflicts in CHANGELOG
 # https://about.gitlab.com/2015/02/10/gitlab-reduced-merge-conflicts-by-90-percent-with-changelog-placeholders/
