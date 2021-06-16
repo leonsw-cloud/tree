@@ -15,6 +15,7 @@ use Hyperf\Database\Model\Builder;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Validation\Contract\ValidatorFactoryInterface;
 use Hyperf\Validation\Rule;
+use Leonsw\Http\BadRequestException;
 
 /**
  * @method Builder deep(int $deep)
@@ -108,7 +109,7 @@ trait TreeTrait
             $exist = static::where($this->tree['fk'], $pk)->exists();
             if ($exist) {
                 // need delete children
-                throw new \RuntimeException('Please delete children or move children.');
+                throw new BadRequestException(trans('message.Please delete children or move children.'));
             }
         }
     }
