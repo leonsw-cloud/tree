@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 namespace LeonswTests\Tree\Unit;
 
-use Leonsw\Tests\HttpTestCase;
+use Leonsw\Testing\HttpTestCase;
 use Leonsw\Tree\Tree;
 
 /**
