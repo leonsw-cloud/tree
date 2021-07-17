@@ -11,7 +11,7 @@
     "prefer-stable": true,
     "require": {},
     "require-dev": {
-        "leonsw/tests": "^2.1"
+        "leonsw/tests": "~2.1.0"
     },
     "autoload": {
         "psr-4": {
